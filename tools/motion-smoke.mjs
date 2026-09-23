@@ -74,6 +74,12 @@ try {
           if (el("effectPanel").getBoundingClientRect().bottom > el("fxNext").getBoundingClientRect().top) issues.push(card.id + ":effect-overlap");
         });
       }
+      state = { ...initialState(), phase: "effect", choices: 15, resources: { health: 12, mood: 23, time: 0 }, effect: { nextLabel: "" } };
+      finish(state, false, ENDINGS.death.health.nightfall);
+      state.phase = "end";
+      render(state);
+      document.querySelectorAll("#endView .big, #endView .why, #endView .summary, #endView .summary-line, #endResources .cost, #endBtn").forEach(n => inside(n, "end-summary"));
+      if (el("endSummary").getBoundingClientRect().bottom > el("endBtn").getBoundingClientRect().top) issues.push("end-summary-overlap");
       if (document.documentElement.scrollHeight > innerHeight || document.documentElement.scrollWidth > innerWidth) issues.push("document-scroll");
       return issues;
     });

@@ -182,6 +182,10 @@
   #endView { justify-content: center; align-items: center; text-align: center; gap: 18px; }
   #endView .big { font-size: 34px; font-weight: 800; }
   #endView .why { font-size: 15px; color: var(--ink-dim); line-height: 1.5; }
+  #endView .summary { width: 100%; padding: 14px; border-radius: 14px; background: var(--panel); border: 1px solid #2a3040; }
+  #endView .summary-line { font-size: 13px; color: var(--ink-dim); line-height: 1.5; }
+  #endView .summary-resources { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  #endView .summary-resources .cost { font-size: 11px; }
   #endView .btn { margin-top: 6px; }
 
   /* ── 가로 모드 차단 ─────────────────────────────── */
@@ -228,7 +232,12 @@
     <section class="view hidden" id="endView">
       <div class="big" id="endTitle"></div>
       <div class="why" id="endWhy"></div>
-      <button class="btn" id="endBtn" type="button">다시 살아보기</button>
+      <div class="summary" id="endSummary">
+        <div class="summary-line" id="endDays"></div>
+        <div class="summary-line" id="endChoices"></div>
+        <div class="summary-resources" id="endResources"></div>
+      </div>
+      <button class="btn" id="endBtn" type="button"></button>
     </section>
   </div>
 </div>
@@ -593,6 +602,8 @@ const ENDINGS = {
   winTitle: "생존",
   loseTitle: "번아웃",
   win: "{days}일을 완주했다. 오늘은 무너지지 않았다.",
+  summaryDays: "진행한 일차: {days}일",
+  summaryChoices: "선택 횟수: {choices}회",
   restart: "다시 살아보기",
   nextLabel: "결과 보기",
   death: {
@@ -654,6 +665,7 @@ function initialState() {
     resources: Object.fromEntries(RESOURCES.map(r => [r.key, r.start])),
     cardId: null,
     usedToday: [],
+    choices: 0,
     effect: null,
     pending: null,
     ending: null,
@@ -683,7 +695,15 @@ function newGame() {
 
 function finish(s, win, why) {
   s.pending = "end";
-  s.ending = { win, why };
+  s.ending = {
+    win,
+    why,
+    summary: {
+      days: win ? DAY_CYCLE.goalDays : s.day,
+      choices: s.choices,
+      resources: { ...s.resources },
+    },
+  };
   s.effect.nextLabel = ENDINGS.nextLabel;
   return s;
 }
@@ -712,6 +732,7 @@ function choose(prev, index) {
   const s = {
     ...prev,
     phase: "effect",
+    choices: prev.choices + 1,
     resources: applyEffects(prev.resources, gained),
     effect: {
       tag: fill(TEXTS.choiceTag, { tag: card.tag }),
@@ -866,6 +887,12 @@ function renderEnd(ending) {
   title.textContent = ending.win ? ENDINGS.winTitle : ENDINGS.loseTitle;
   title.style.color = ending.win ? "var(--mood)" : "var(--bad)";
   el("endWhy").textContent = ending.why;
+  el("endDays").textContent = fill(ENDINGS.summaryDays, { days: ending.summary.days });
+  el("endChoices").textContent = fill(ENDINGS.summaryChoices, { choices: ending.summary.choices });
+  el("endResources").innerHTML = RESOURCES.map(r => {
+    const value = ending.summary.resources[r.key];
+    return '<span class="cost" data-res="' + r.key + '">' + shape(r.key) + '<span>' + r.ko + " " + value + "</span></span>";
+  }).join("");
   el("endBtn").textContent = ENDINGS.restart;
 }
 
@@ -876,7 +903,15 @@ function render(s) {
   Object.keys(VIEW_ID).forEach(phase => el(VIEW_ID[phase]).classList.toggle("hidden", phase !== s.phase));
   if (s.phase === "card")   renderCard(s);
   if (s.phase === "effect") renderEffect(s);
-  if (s.phase === "end")    renderEnd(s.ending);
+  if (s.phase === "end") {
+    renderEnd(s.ending);
+  } else {
+    el("endTitle").textContent = "";
+    el("endWhy").textContent = "";
+    el("endDays").textContent = "";
+    el("endChoices").textContent = "";
+    el("endResources").innerHTML = "";
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════

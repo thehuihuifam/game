@@ -65,7 +65,7 @@ Loop이 **실제로 필요로 만든** 시스템만 여기에 승격한다. 미�
 ### state 스키마 (단일 원천)
 
 ```
-{ phase, day, slot, resources, cardId, usedToday, effect, pending, ending }
+{ phase, day, slot, resources, cardId, usedToday, choices, effect, pending, ending }
 ```
 
 | 필드 | 값 | 뜻 |
@@ -76,9 +76,10 @@ Loop이 **실제로 필요로 만든** 시스템만 여기에 승격한다. 미�
 | `resources` | `{health, mood, time}` | 자원 현재값. 키는 `RESOURCES`에서 옴 |
 | `cardId` | string | 현재 카드 |
 | `usedToday` | string[] | 오늘 이미 나온 카드(중복 방지). 새 하루에 리셋 |
+| `choices` | 0.. | 이번 판에서 선택한 카드 옵션 수. 새 판에서 0으로 초기화 |
 | `effect` | null \| 페이로드 | `{tag, title, deltas, beforeResources, flavor, conseq, dayEnd, nextLabel}` — 효과 화면이 표시할 것 전부 |
 | `pending` | null \| `slot` \| `day` \| `end` | 효과 화면의 "다음"이 어디로 갈지 |
-| `ending` | null \| `{win, why}` | `phase==="end"`일 때만 값 |
+| `ending` | null \| `{win, why, summary}` | `phase==="end"`일 때만 값. `summary={days, choices, resources}`는 종료 시점의 판 요약이며 `days`는 승리 시 `goalDays`, 그 외에는 마지막 진행 일차 |
 
 ### 자원 스키마 `RESOURCES`
 
@@ -123,7 +124,7 @@ OPTION { label, flavor, effects: {<resourceKey>: number}, conseq: {tone, text} }
 | # | 현재 phase | 트리거 | 조건 | 다음 phase | 하는 일 |
 |---|-----------|--------|------|-----------|---------|
 | T0 | — | `newGame()` | — | `card` | state 초기화 → 슬롯 0 드로 |
-| T1 | `card` | `choose(i)` | 항상 | `effect` | 옵션 `effects` 적용 → 하루 종료 판정 → `effect` 페이로드 기록 |
+| T1 | `card` | `choose(i)` | 항상 | `effect` | `choices` 증가 → 옵션 `effects` 적용 → 하루 종료 판정 → `effect` 페이로드 기록 |
 | T2 | `effect` | `next()` | `pending==="end"` | `end` | — |
 | T3 | `effect` | `next()` | `pending==="day"` | `card` | `slot=0`, `usedToday=[]`, 드로 |
 | T4 | `effect` | `next()` | `pending==="slot"` | `card` | `slot+1`, 드로 |
