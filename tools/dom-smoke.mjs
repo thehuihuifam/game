@@ -37,8 +37,8 @@ const fixtures = [
   { name: "상한 회복 0", cardId: "dawn", option: 0, resources: { mood: 100 }, expected: ["neg", null, "neg"] },
   { name: "휴식 상쇄·시간 충전", cardId: "dawn", option: 0, slot: 4, expected: [null, "pos", "pos"] },
   { name: "시간 충전 전후 동일", cardId: "dawn", option: 0, slot: 4, resources: { time: 12 }, expected: [null, "pos", null] },
-  { name: "즉시 죽음", cardId: "dawn", option: 0, resources: { health: 1 }, expected: ["neg", "pos", "neg"] },
-  { name: "조기 마감 죽음", cardId: "dawn", option: 0, resources: { health: 8, time: 1 }, expected: ["neg", "neg", "neg"] },
+  { name: "즉시 죽음", cardId: "dawn", option: 0, resources: { health: 1 }, expected: ["neg", "pos", "neg"], ending: true },
+  { name: "조기 마감 죽음", cardId: "dawn", option: 0, resources: { health: 8, time: 1 }, expected: ["neg", "neg", "neg"], ending: true },
 ];
 for (const fixture of fixtures) {
   dom.window.eval(`
@@ -59,6 +59,7 @@ for (const fixture of fixtures) {
     });
   });
   check(fixture.name + " 선택 전 사본 보존", dom.window.eval("JSON.stringify(state.effect.beforeResources)") === JSON.stringify(JSON.parse(before).resources));
+  check(fixture.name + " 선택 횟수 누적", dom.window.eval("state.choices") === 1);
   const effectState = dom.window.eval("JSON.stringify(state)");
   dom.window.eval("render(state)");
   check("렌더는 state 불변", dom.window.eval("JSON.stringify(state)") === effectState);
@@ -68,6 +69,15 @@ for (const fixture of fixtures) {
   check("효과 화면 배경·중복 선택은 무기능", dom.window.eval("JSON.stringify(state)") === effectState);
   document.getElementById("fxNext").click();
   check("다음 화면에서 강조 해제", !document.querySelector("#topbar [data-change]"));
+  if (fixture.ending) {
+    check(fixture.name + " 마지막 효과 뒤 종료", visible("endView"));
+    const summary = dom.window.eval("state.ending.summary");
+    check(fixture.name + " 요약 일차·횟수 정확", summary.days === 1 && summary.choices === 1);
+    check(fixture.name + " 요약 최종 자원 정확", JSON.stringify(summary.resources) === JSON.stringify(dom.window.eval("state.resources")));
+    check(fixture.name + " 종료 화면 요약 렌더", document.getElementById("endDays").textContent.includes("1일") && document.getElementById("endChoices").textContent.includes("1회") && document.querySelectorAll("#endResources .cost").length === 3);
+    document.getElementById("endBtn").click();
+    check(fixture.name + " 다시 시작 요약 초기화", visible("cardView") && dom.window.eval("state.choices") === 0 && !document.querySelector("#topbar [data-change]"));
+  }
 }
 dom.window.eval("state = newGame(); render(state)");
 
@@ -85,10 +95,17 @@ for (let game = 0; game < 200; game++) {
   }
   if (!visible("endView")) { problems.push("한 판이 끝나지 않음"); break; }
   check("종료 사유 표시", document.getElementById("endWhy").textContent.length > 0);
+  const ending = dom.window.eval("state.ending");
+  const shownDays = Number(document.getElementById("endDays").textContent.match(/(\d+)일/)?.[1]);
+  const shownChoices = Number(document.getElementById("endChoices").textContent.match(/(\d+)회/)?.[1]);
+  check("종료 일차 요약 정확", shownDays === ending.summary.days && shownDays === (ending.win ? 3 : dom.window.eval("state.day")));
+  check("종료 선택 횟수 요약 정확", shownChoices === ending.summary.choices && shownChoices === dom.window.eval("state.choices"));
+  check("최종 자원 요약 정확", [...document.querySelectorAll("#endResources .cost")].map(n => n.textContent.trim()).join("|") === `체력 ${ending.summary.resources.health}|기분 ${ending.summary.resources.mood}|시간 ${ending.summary.resources.time}`);
   stats.maxDay = Math.max(stats.maxDay, Number(document.getElementById("dayNum").textContent));
   if (document.getElementById("endTitle").textContent === "생존") stats.wins++; else stats.losses++;
   document.getElementById("endBtn").click();
   check("다시 시작하면 카드 화면", visible("cardView"));
+  check("재시작 요약·선택·강조 초기화", dom.window.eval("state.choices === 0 && state.ending === null && state.effect === null") && !document.querySelector("#topbar [data-change]") && document.getElementById("endDays").textContent === "");
 }
 
 check("JS 예외 없음", errors.length === 0, errors.slice(0, 2).join(" | "));
