@@ -8,7 +8,7 @@
 | 1 | [Fix] [#1](https://github.com/thehuihuifam/game/pull/1) | ✅ 완료 | `MATERIALS.md` 소재 노트 추가 + AGENTS.md 세션 규칙에 "카드·이벤트·대사 소재는 MATERIALS.md 참조" 한 줄 추가. |
 | 2 | [#2](https://github.com/thehuihuifam/game/pull/2) | ✅ 완료 | 큐 목표를 AGENTS.md `시스템 스펙`(스키마·전이표 T0~T5·무결성 규칙 5개)으로 승격 후 구현. `index.html`을 DATA/RULE/VIEW/CONTROLLER로 분리하고 자원·카드·팩(morning·school·home)·하루 사이클·문구를 데이터화. 죽음·승리도 효과 화면을 거치게 통일, 완주 화면 `undefined` 버그 수정. 밸런스 숫자는 Loop 1 그대로(패리티 검사 포함 311,653건·120판 fuzz 통과). |
 | 3 | [#3](https://github.com/thehuihuifam/game/pull/3) | ✅ 완료 | 카드 7→20장(신규 13장) + `CARD.minDay`(2·3일차 게이트) 승격으로 3일 압박 곡선을 DATA만으로 구현. 전 카드 수치 재조정 → 무작위 완주 38.4%(죽음 3경로 모두 관측)·최선 플레이 79~100%·최악 0.2%, 하루 중복 0건. 검사 하네스 `tools/`(check·sim·dom-smoke) 추가. |
-| 4 | PR 준비 중 | ✅ 완료 | 선택 결과 CSS 피드백(200~250ms)·실제 변화 자원만 강조·reduce 0ms·작은 세로 화면 보완. check 23건·DOM 200판·시드 고정 2,000판/54,042상태 Loop 3 패리티 및 Chromium 전 카드·3개 뷰포트 검사 통과. |
+| 4 | [#4](https://github.com/thehuihuifam/game/pull/4) | ✅ 완료 | 선택 결과 CSS 피드백(200~250ms)·실제 변화 자원만 강조·reduce 0ms·작은 세로 화면 보완. check 23건·DOM 200판·시드 고정 2,000판/54,042상태 Loop 3 패리티 및 Chromium 전 카드·3개 뷰포트 검사 통과. |
 
 ## 다음 작업
 
