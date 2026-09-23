@@ -40,7 +40,12 @@
     width: 100%;
   }
 
-  /* ── 상단 자원 헤더 ─────────────────────────────── */
+  /* 자원 색 매핑 — RESOURCES에 자원을 늘리면 여기 한 줄씩 추가 */
+  [data-res="health"] { --res: var(--health); }
+  [data-res="mood"]   { --res: var(--mood); }
+  [data-res="time"]   { --res: var(--time); }
+
+  /* ── 상단 자원 헤더 (VIEW가 RESOURCES로 조립) ─────── */
   #topbar {
     display: flex;
     align-items: stretch;
@@ -60,15 +65,15 @@
   #topbar .day .lbl { font-size: 10px; color: var(--ink-dim); margin-top: 3px; letter-spacing: .05em; }
   #topbar .stats { flex: 1; display: flex; flex-direction: column; gap: 6px; justify-content: center; }
   .stat { display: flex; align-items: center; gap: 7px; }
-  .stat .ico { width: 14px; height: 14px; flex: 0 0 auto; }
+  .stat .ico { width: 14px; height: 14px; flex: 0 0 auto; color: var(--res); }
+  .stat .ico svg { width: 100%; height: 100%; display: block; }
   .stat .barwrap { flex: 1; height: 10px; border-radius: 6px; background: #0c0f16; overflow: hidden; display: flex; }
-  .stat .bar { width: 100%; height: 100%; border-radius: 6px; transition: width .25s ease; }
+  .stat .bar { width: 100%; height: 100%; border-radius: 6px; background: var(--res); transition: width .25s ease; }
   .stat .num { font-size: 11px; font-weight: 700; width: 34px; text-align: right; color: var(--ink-dim); }
-  #healthbar  { background: var(--health); }
-  #moodbar   { background: var(--mood); }
-  #timepips  { display: flex; gap: 4px; }
-  #timepips .pip { width: 9px; height: 9px; border-radius: 3px; background: #0c0f16; }
-  #timepips .pip.on { background: var(--time); }
+  .stat .rlbl { font-size: 11px; font-weight: 700; color: var(--ink-dim); }
+  .stat .pips { display: flex; gap: 4px; }
+  .stat .pip { width: 9px; height: 9px; border-radius: 3px; background: #0c0f16; }
+  .stat .pip.on { background: var(--res); }
 
   /* ── 화면(뷰) 공통 ──────────────────────────────── */
   #stage { flex: 1; position: relative; min-height: 0; }
@@ -98,8 +103,10 @@
   .opt .line2 { display: flex; align-items: center; gap: 10px; }
   .opt .label { flex: 1; }
   .opt .costs { display: flex; gap: 6px; flex: 0 0 auto; align-items: center; }
+
+  /* ── 자원 칩 (선택지 미리보기 + 효과 화면 공용) ──── */
   .cost { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 800; padding: 3px 7px; border-radius: 7px; background: #0c0f16; }
-  .cost svg { width: 11px; height: 11px; }
+  .cost svg { width: 11px; height: 11px; color: var(--res); }
   .cost.pos { color: var(--ok); }
   .cost.neg { color: var(--bad); }
 
@@ -109,13 +116,13 @@
   #effectPanel .tag { font-size: 11px; color: var(--mood); letter-spacing: .12em; font-weight: 700; }
   #effectPanel .title { font-size: 20px; font-weight: 800; margin: 8px 0 10px; line-height: 1.3; }
   #effectPanel .delta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-  #effectPanel .delta .d { display: flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 800; padding: 6px 10px; border-radius: 9px; background: #0c0f16; }
-  #effectPanel .delta svg { width: 13px; height: 13px; }
   #effectPanel .flavor { font-size: 14px; color: var(--ink-dim); line-height: 1.55; }
   #effectPanel .conseq { margin-top: 12px; padding: 10px 12px; border-radius: 10px; font-size: 13px; font-weight: 700; line-height: 1.4; }
   #effectPanel .conseq.good { background: #17321c; color: var(--ok); border: 1px solid #24492a; }
   #effectPanel .conseq.bad  { background: #3a1a16; color: var(--bad); border: 1px solid #5a2720; }
   #effectPanel .conseq.note { background: #16203a; color: #9db4f5; border: 1px solid #26365c; }
+  #effectPanel .dayend { display: flex; flex-direction: column; gap: 8px; }
+  #effectPanel .dayend .delta { margin: 0; }
   .btn {
     width: 100%;
     padding: 16px;
@@ -151,23 +158,7 @@
 <div id="game">
   <div id="topbar">
     <div class="day"><div class="num" id="dayNum">1</div><div class="lbl">DAY</div></div>
-    <div class="stats">
-      <div class="stat">
-        <svg class="ico" viewBox="0 0 12 12"><rect x="2" y="3" width="8" height="7" rx="2" fill="#e4573d"/></svg>
-        <div class="barwrap"><div class="bar" id="healthbar"></div></div>
-        <div class="num" id="healthNum">100</div>
-      </div>
-      <div class="stat">
-        <svg class="ico" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="#f2b632"/></svg>
-        <div class="barwrap"><div class="bar" id="moodbar"></div></div>
-        <div class="num" id="moodNum">100</div>
-      </div>
-      <div class="stat">
-        <svg class="ico" viewBox="0 0 12 12"><rect x="2" y="4" width="8" height="6" rx="1" fill="#4f86f7"/><rect x="5" y="3" width="2" height="2" fill="#4f86f7"/></svg>
-        <div class="num">시간</div>
-        <div id="timepips"></div>
-      </div>
-    </div>
+    <div class="stats" id="stats"></div>
   </div>
 
   <div id="stage">
@@ -186,15 +177,16 @@
         <div class="title" id="fxTitle"></div>
         <div class="delta" id="fxDelta"></div>
         <div class="flavor" id="fxFlavor"></div>
-        <div class="conseq note" id="fxConseq"></div>
+        <div class="conseq note hidden" id="fxConseq"></div>
+        <div class="conseq note dayend hidden" id="fxDayEnd"></div>
       </div>
-      <button class="btn" id="fxNext"></button>
+      <button class="btn" id="fxNext" type="button"></button>
     </section>
 
     <section class="view hidden" id="endView">
       <div class="big" id="endTitle"></div>
       <div class="why" id="endWhy"></div>
-      <button class="btn" id="endBtn">다시 살아보기</button>
+      <button class="btn" id="endBtn" type="button">다시 살아보기</button>
     </section>
   </div>
 </div>
@@ -203,29 +195,26 @@
 <script>
 "use strict";
 
-/* ── 도형 아이콘 헬퍼 (외부 에셋 금지 — 인라인 SVG) ── */
-const ICO = {
-  health: '<svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="#e4573d"/></svg>',
-  mood:   '<svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="#f2b632"/></svg>',
-  time:   '<svg viewBox="0 0 12 12"><rect x="2" y="4" width="8" height="6" rx="1" fill="#4f86f7"/><rect x="5" y="3" width="2" height="2" fill="#4f86f7"/></svg>',
+/* ═══════════════════════════════════════════════════════════════
+   DATA — 자원·카드·팩·하루 사이클·문구. 읽기 전용 상수.
+   스키마는 AGENTS.md "시스템 스펙" 참조. 이 구역은 DOM·state를 모른다.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ① 자원 — 한 줄을 추가하면 게이지가 늘어난다 */
+const RESOURCES = [
+  { key: "health", ko: "체력", min: 0, max: 100, start: 48, ui: "bar",  shape: "square", deadly: true  },
+  { key: "mood",   ko: "기분", min: 0, max: 100, start: 48, ui: "bar",  shape: "circle", deadly: true  },
+  { key: "time",   ko: "시간", min: 0, max: 12,  start: 8,  ui: "pips", shape: "clock",  deadly: false },
+];
+
+/* ② 도형 — 외부 에셋 금지(불변식 4). 색은 currentColor(CSS의 --res) */
+const SHAPES = {
+  square: '<rect x="2" y="3" width="8" height="7" rx="2" fill="currentColor"/>',
+  circle: '<circle cx="6" cy="6" r="5" fill="currentColor"/>',
+  clock:  '<rect x="2" y="4" width="8" height="6" rx="1" fill="currentColor"/><rect x="5" y="3" width="2" height="2" fill="currentColor"/>',
 };
 
-/* ── 게임 상태 (단일 원천) ── */
-const START = { health: 48, mood: 48, time: 8, day: 1, turn: 0 };
-const DAY_TURNS = 5;   // 하루 = 선택 5번
-const GOAL_DAYS = 3;   // 3일 완주 = 승리
-const LABEL = [
-  { key: "health", ko: "체력" },
-  { key: "mood",   ko: "기분" },
-  { key: "time",   ko: "시간" },
-];
-const TIME_PER_HAND = 1; // 선택 1번마다 시간 1 소모
-
-let state = null;
-
-function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
-
-/* ── 카드 팩 (순수 창작 픽션). 각 선택 = 체력/기분/시간의 트레이드오프 ── */
+/* ③ 카드 — 순수 창작 픽션(소재: MATERIALS.md). effects의 키는 RESOURCES.key */
 const CARDS = [
   {
     id: "dawn",
@@ -233,9 +222,12 @@ const CARDS = [
     title: "알람이 울렸다.",
     text: "몸은 천 근이고, 오늘은 1교시부터 체육이다. 아이들은 아직 자고 있다.",
     options: [
-      { label: "일어나 몸부터 푼다",          flavor: "냉수를 마시고 스트레칭. 몸이 깨어나는 게 느껴진다.", health:-5, mood:+5, time:-1, good:"몸은 힘들지만 기분은 맑아졌다." },
-      { label: "10분만 더 잔다",              flavor: "눈을 감자마자 알람이 다시 울린다. 허겁지겁 뛰어나간다.", health:+3, mood:-2, time:-1, bad:"잠은 보충했지만 마음이 조급하다." },
-      { label: "아이들 등교 준비부터 챙긴다",  flavor: "도시락을 싸고 가방을 챙겨준다. 마음은 놓인다.", health:-4, mood:+4, time:-2, good:"아이들 얼굴을 보고 나가니 한결 낫다." },
+      { label: "일어나 몸부터 푼다",         flavor: "냉수를 마시고 스트레칭. 몸이 깨어나는 게 느껴진다.",
+        effects: { health: -5, mood: +5, time: -1 }, conseq: { tone: "good", text: "몸은 힘들지만 기분은 맑아졌다." } },
+      { label: "10분만 더 잔다",             flavor: "눈을 감자마자 알람이 다시 울린다. 허겁지겁 뛰어나간다.",
+        effects: { health: +3, mood: -2, time: -1 }, conseq: { tone: "bad", text: "잠은 보충했지만 마음이 조급하다." } },
+      { label: "아이들 등교 준비부터 챙긴다", flavor: "도시락을 싸고 가방을 챙겨준다. 마음은 놓인다.",
+        effects: { health: -4, mood: +4, time: -2 }, conseq: { tone: "good", text: "아이들 얼굴을 보고 나가니 한결 낫다." } },
     ],
   },
   {
@@ -244,9 +236,12 @@ const CARDS = [
     title: "복도에서 학부모가 말을 걸어온다.",
     text: "수업 준비 시간인데, 통화하듯 긴 이야기가 시작됐다.",
     options: [
-      { label: "끝까지 들어 드린다",          flavor: "이야기는 길어졌고, 준비 시간은 사라졌다.", health:0, mood:-4, time:-2, bad:"공감은 했지만 수업 준비가 밀렸다. 기분이 무겁다." },
-      { label: "정중히 끊고 수업 준비",        flavor: "다음에 상담을 잡아 드린다. 숨 고르고 교실로.", health:-1, mood:0, time:0, good:"수업 준비가 덜 밀렸다. 조금은 미안하지만." },
-      { label: "아이 얘기라 무시 못 한다",     flavor: "마음을 쏟아 들었다. 교무실 복귀는 늦어졌다.", health:-5, mood:+3, time:-2, good:"학부모가 안심하는 모습에 보람이 든다." },
+      { label: "끝까지 들어 드린다",         flavor: "이야기는 길어졌고, 준비 시간은 사라졌다.",
+        effects: { health: 0, mood: -4, time: -2 }, conseq: { tone: "bad", text: "공감은 했지만 수업 준비가 밀렸다. 기분이 무겁다." } },
+      { label: "정중히 끊고 수업 준비",       flavor: "다음에 상담을 잡아 드린다. 숨 고르고 교실로.",
+        effects: { health: -1, mood: 0, time: 0 }, conseq: { tone: "good", text: "수업 준비가 덜 밀렸다. 조금은 미안하지만." } },
+      { label: "아이 얘기라 무시 못 한다",    flavor: "마음을 쏟아 들었다. 교무실 복귀는 늦어졌다.",
+        effects: { health: -5, mood: +3, time: -2 }, conseq: { tone: "good", text: "학부모가 안심하는 모습에 보람이 든다." } },
     ],
   },
   {
@@ -255,9 +250,12 @@ const CARDS = [
     title: "점심인데 회의가 겹쳤다.",
     text: "급식실 갈 시간도 빠듯한데, 외부 강사 회의가 먼저 잡혀 있다.",
     options: [
-      { label: "급하게 후루룩 먹는다",        flavor: "5분 만에 비운 밥. 허겁지겁 회의실로.", health:+2, mood:-5, time:0, bad:"어쨌든 밥은 먹었지만 마음만 급했다." },
-      { label: "거르고 회의에 집중",          flavor: "회의는 잘 끝났지만 속이 비었다.", health:-7, mood:-1, time:+1, bad:"허기가 밀려온다. 오후가 위험하다." },
-      { label: "잠깐 운동장을 돈다",          flavor: "밥 대신 잠깐 걸으며 기운을 돌린다.", health:-2, mood:+4, time:-1, good:"바깥바람이 머리를 식혔다." },
+      { label: "급하게 후루룩 먹는다",       flavor: "5분 만에 비운 밥. 허겁지겁 회의실로.",
+        effects: { health: +2, mood: -5, time: 0 }, conseq: { tone: "bad", text: "어쨌든 밥은 먹었지만 마음만 급했다." } },
+      { label: "거르고 회의에 집중",         flavor: "회의는 잘 끝났지만 속이 비었다.",
+        effects: { health: -7, mood: -1, time: +1 }, conseq: { tone: "bad", text: "허기가 밀려온다. 오후가 위험하다." } },
+      { label: "잠깐 운동장을 돈다",         flavor: "밥 대신 잠깐 걸으며 기운을 돌린다.",
+        effects: { health: -2, mood: +4, time: -1 }, conseq: { tone: "good", text: "바깥바람이 머리를 식혔다." } },
     ],
   },
   {
@@ -266,9 +264,12 @@ const CARDS = [
     title: "아이가 넘어져 무릎이 까졌다.",
     text: "울먹이는 아이를 데리고 양호실로 달려야 한다.",
     options: [
-      { label: "안심시키고 담임을 부른다",    flavor: "아이 손을 잡고 기다려준다. 다음 수업은 약속을 조정.", health:-2, mood:+3, time:-1, good:"아이가 웃음을 되찾았다." },
-      { label: "빨리 처리하고 수업 복귀",     flavor: "효율적으로 처리. 수업은 제시간에 시작한다.", health:0, mood:-4, time:+1, bad:"아이를 두고 온 게 마음에 걸린다." },
-      { label: "사고 기록까지 꼼꼼히 남긴다", flavor: "보고서를 쓰느라 시간이 길어졌다.", health:-4, mood:0, time:-2, good:"기록을 남겨 두니 마음은 든든하다." },
+      { label: "안심시키고 담임을 부른다",    flavor: "아이 손을 잡고 기다려준다. 다음 수업은 약속을 조정.",
+        effects: { health: -2, mood: +3, time: -1 }, conseq: { tone: "good", text: "아이가 웃음을 되찾았다." } },
+      { label: "빨리 처리하고 수업 복귀",     flavor: "효율적으로 처리. 수업은 제시간에 시작한다.",
+        effects: { health: 0, mood: -4, time: +1 }, conseq: { tone: "bad", text: "아이를 두고 온 게 마음에 걸린다." } },
+      { label: "사고 기록까지 꼼꼼히 남긴다", flavor: "보고서를 쓰느라 시간이 길어졌다.",
+        effects: { health: -4, mood: 0, time: -2 }, conseq: { tone: "good", text: "기록을 남겨 두니 마음은 든든하다." } },
     ],
   },
   {
@@ -277,9 +278,12 @@ const CARDS = [
     title: "전체 교직원 회의가 잡혔다.",
     text: "길어질 기색이다. 오늘도 집에 늦는다.",
     options: [
-      { label: "끝까지 남는다",               flavor: "회의는 길어졌다. 밤하늘 아래 퇴근.", health:-6, mood:-4, time:-2, bad:"몸도 마음도 축났다." },
-      { label: "조퇴하고 아이들 픽업",        flavor: "가정사를 이유로 먼저 나온다. 마음은 급하다.", health:0, mood:+3, time:+1, note:"눈치는 보였지만 집에선 안도했다." },
-      { label: "녹음 정리 요청을 자처",       flavor: "끝까지 있되, 몰입해서 듣는다.", health:-2, mood:-3, time:-2, note:"길었지만 몰입하니 오히려 덜 지쳤다." },
+      { label: "끝까지 남는다",              flavor: "회의는 길어졌다. 밤하늘 아래 퇴근.",
+        effects: { health: -6, mood: -4, time: -2 }, conseq: { tone: "bad", text: "몸도 마음도 축났다." } },
+      { label: "조퇴하고 아이들 픽업",        flavor: "가정사를 이유로 먼저 나온다. 마음은 급하다.",
+        effects: { health: 0, mood: +3, time: +1 }, conseq: { tone: "note", text: "눈치는 보였지만 집에선 안도했다." } },
+      { label: "녹음 정리 요청을 자처",       flavor: "끝까지 있되, 몰입해서 듣는다.",
+        effects: { health: -2, mood: -3, time: -2 }, conseq: { tone: "note", text: "길었지만 몰입하니 오히려 덜 지쳤다." } },
     ],
   },
   {
@@ -288,9 +292,12 @@ const CARDS = [
     title: "둘째가 열이 난다.",
     text: "해열제를 먹였지만 열이 안 떨어진다. 병원은 벌써 닫혔다.",
     options: [
-      { label: "새벽까지 옆에서 간호",        flavor: "미지근한 물수건을 갈아 주며 밤을 샌다.", health:-7, mood:+3, time:-2, good:"해가 뜰 무렵 열이 내렸다. 안도감이 크다." },
-      { label: "배우자와 교대한다",           flavor: "번갈아 짧게라도 잔다.", health:-2, mood:-1, time:-1, good:"조금씩 자 둔 덕에 그나마 버틸 만하다." },
-      { label: "응급실에 간다",               flavor: "밤새 진료를 기다린다. 결과적으로 밤을 꼬박 샜다.", health:-6, mood:-5, time:-3, bad:"아이는 안정됐지만 몸이 남아나질 않는다." },
+      { label: "새벽까지 옆에서 간호",       flavor: "미지근한 물수건을 갈아 주며 밤을 샌다.",
+        effects: { health: -7, mood: +3, time: -2 }, conseq: { tone: "good", text: "해가 뜰 무렵 열이 내렸다. 안도감이 크다." } },
+      { label: "배우자와 교대한다",          flavor: "번갈아 짧게라도 잔다.",
+        effects: { health: -2, mood: -1, time: -1 }, conseq: { tone: "good", text: "조금씩 자 둔 덕에 그나마 버틸 만하다." } },
+      { label: "응급실에 간다",              flavor: "밤새 진료를 기다린다. 결과적으로 밤을 꼬박 샜다.",
+        effects: { health: -6, mood: -5, time: -3 }, conseq: { tone: "bad", text: "아이는 안정됐지만 몸이 남아나질 않는다." } },
     ],
   },
   {
@@ -299,165 +306,356 @@ const CARDS = [
     title: "아이들이 잠들었다.",
     text: "이제야 혼자만의 시간. 내일 수업 자료도 밀려 있다.",
     options: [
-      { label: "정리하고 곧장 잔다",          flavor: "자료는 미룬 채 이불 속으로. 눈이 감긴다.", health:+4, mood:+2, time:+1, good:"잠은 최고의 회복제다." },
-      { label: "밤새 수업 자료를 만든다",     flavor: "눈을 비비며 자료를 완성한다.", health:-7, mood:-4, time:-2, bad:"자료는 끝냈지만 몸이 비명을 지른다." },
-      { label: "잠깐 혼자 숨을 고른다",       flavor: "창밖을 멍하니 바라본다. 10분도 안 돼 잠들었다.", health:+2, mood:+3, time:0, good:"혼자만의 멍때림. 회복이 크다." },
+      { label: "정리하고 곧장 잔다",         flavor: "자료는 미룬 채 이불 속으로. 눈이 감긴다.",
+        effects: { health: +4, mood: +2, time: +1 }, conseq: { tone: "good", text: "잠은 최고의 회복제다." } },
+      { label: "밤새 수업 자료를 만든다",     flavor: "눈을 비비며 자료를 완성한다.",
+        effects: { health: -7, mood: -4, time: -2 }, conseq: { tone: "bad", text: "자료는 끝냈지만 몸이 비명을 지른다." } },
+      { label: "잠깐 혼자 숨을 고른다",       flavor: "창밖을 멍하니 바라본다. 10분도 안 돼 잠들었다.",
+        effects: { health: +2, mood: +3, time: 0 }, conseq: { tone: "good", text: "혼자만의 멍때림. 회복이 크다." } },
     ],
   },
 ];
 
-/* ── 렌더 ── */
-function renderTopbar() {
-  document.getElementById("dayNum").textContent = state.day;
-  document.getElementById("healthbar").style.width = state.health + "%";
-  document.getElementById("moodbar").style.width = state.mood + "%";
-  document.getElementById("healthNum").textContent = state.health;
-  document.getElementById("moodNum").textContent = state.mood;
-  const pips = document.getElementById("timepips");
-  pips.innerHTML = "";
-  for (let i = 0; i < 12; i++) {
-    const p = document.createElement("div");
-    p.className = "pip" + (i < state.time ? " on" : "");
-    pips.appendChild(p);
-  }
+/* ④ 팩 — 카드 id를 참조한다(단방향). 카드 7장의 시각 태그를 그대로 묶었다 */
+const PACKS = {
+  morning: { ko: "아침", cards: ["dawn", "parent"] },
+  school:  { ko: "학교", cards: ["lunch", "injury", "meeting"] },
+  home:    { ko: "집",   cards: ["fever", "night"] },
+};
+
+/* ⑤ 하루 사이클 — 하루 길이 = slots.length */
+const DAY_CYCLE = {
+  goalDays: 3,
+  baseTimeCost: 1,   // 선택 1회의 기본 시간 소모
+  timeRefill: 12,    // 새 하루에 채워 주는 시간
+  noRepeatInDay: true,
+  slots: [
+    { packs: ["morning"] },
+    { packs: ["morning", "school"] },
+    { packs: ["school"] },
+    { packs: ["school", "home"] },
+    { packs: ["home"] },
+  ],
+  rest:      { effects: { health: +4, mood: +3 }, text: "하루를 마쳤다. 잠시 회복." },
+  nightfall: { effects: { health: -5, mood: -4 }, text: "시간을 다 써버렸다. 남은 일이 내일로 밀린다." },
+};
+
+/* ⑥ 문구 — RULE에 한국어 리터럴을 두지 않는다. {자리}는 RULE이 채운다 */
+const TEXTS = {
+  choiceTag: "{tag} · 선택",
+  nextContinue: "계속",
+  nextDay: "{day}일차로",
+  dayStart: " — {day}일차 시작",
+  dayDone: " — 완주.",
+};
+
+/* ⑦ 종료 문구 */
+const ENDINGS = {
+  winTitle: "생존",
+  loseTitle: "번아웃",
+  win: "{days}일을 완주했다. 오늘은 무너지지 않았다.",
+  restart: "다시 살아보기",
+  nextLabel: "결과 보기",
+  death: {
+    health: { now: "체력이 바닥났다. 눈앞이 흐릿해진다.", nightfall: "지친 하루 끝에 몸이 무너졌다." },
+    mood:   { now: "마음이 꺾였다. 하루가 버거워진다.",   nightfall: "지친 하루 끝에 마음이 꺾였다." },
+  },
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   RULE — 순수 함수. state + 입력 -> 새 state. DOM을 모른다.
+   전이표: T0 newGame / T1 choose / T2~T4 next
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 문구 템플릿의 {자리}를 값으로 바꾼다 */
+function fill(template, slots) {
+  return Object.keys(slots).reduce((out, k) => out.split("{" + k + "}").join(slots[k]), template);
 }
 
-function show(id) {
-  document.querySelectorAll(".view").forEach(v => v.classList.add("hidden"));
-  document.getElementById(id).classList.remove("hidden");
+const RES  = Object.fromEntries(RESOURCES.map(r => [r.key, r]));
+const CARD = Object.fromEntries(CARDS.map(c => [c.id, c]));
+
+function clamp(key, v) {
+  const r = RES[key];
+  return Math.max(r.min, Math.min(r.max, v));
 }
 
-function costBadge(key, amount) {
-  const sign = amount < 0 ? "" : "+";
-  const cls = amount < 0 ? "neg" : "pos";
-  const ico = ICO[key];
-  const ko = LABEL.find(l => l.key === key).ko;
-  return `<span class="cost ${cls}">${ico}<span>${ko} ${sign}${amount}</span></span>`;
+function applyEffects(resources, effects) {
+  const next = { ...resources };
+  for (const key of Object.keys(effects)) next[key] = clamp(key, next[key] + effects[key]);
+  return next;
 }
 
-// 선택 1번의 기본 시간 소모를 반영한 순효과
-function netTime(o) { return (o.time || 0) - TIME_PER_HAND; }
-
-function drawCard(card) {
-  document.getElementById("cardTag").textContent = card.tag;
-  document.getElementById("cardTitle").textContent = card.title;
-  document.getElementById("cardText").textContent = card.text;
-  const opts = document.getElementById("options");
-  opts.innerHTML = "";
-  card.options.forEach((o, i) => {
-    const b = document.createElement("button");
-    b.className = "opt";
-    const costs = [
-      ...["health","mood"].filter(k => o[k]).map(k => costBadge(k, o[k])),
-    ];
-    if (netTime(o) !== 0) costs.push(costBadge("time", netTime(o)));
-    b.innerHTML = `<div class="line2"><span class="label">${o.label}</span><span class="costs">${costs.join("")}</span></div>`;
-    b.addEventListener("click", () => choose(card, i));
-    opts.appendChild(b);
-  });
-  show("cardView");
-  renderTopbar();
+/* 선택 1회의 기본 시간 소모를 반영한 실제 효과 */
+function withBaseCost(effects) {
+  return { ...effects, time: (effects.time || 0) - DAY_CYCLE.baseTimeCost };
 }
 
-/* ── 선택 처리 (즉시 효과 표시) ── */
-function choose(card, index) {
-  const o = card.options[index];
-
-  // 자원 적용
-  state.health = clamp(state.health + (o.health || 0), 0, 100);
-  state.mood   = clamp(state.mood + (o.mood || 0), 0, 100);
-  state.time   = clamp(state.time + netTime(o), 0, 12);
-  state.turn  += 1;
-
-  // 효과 표시
-  document.getElementById("fxTag").textContent = card.tag + " · 선택";
-  document.getElementById("fxTitle").textContent = o.label;
-  const delta = [
-    ...["health","mood"].filter(k => o[k]).map(k => costBadge(k, o[k])),
-  ];
-  if (netTime(o) !== 0) delta.push(costBadge("time", netTime(o)));
-  document.getElementById("fxDelta").innerHTML = delta.join("");
-  document.getElementById("fxFlavor").textContent = o.flavor;
-
-  // 판정
-  if (state.health <= 0) return endGame(false, "체력이 바닥났다. 눈앞이 흐릿해진다.");
-  if (state.mood <= 0)   return endGame(false, "마음이 꺾였다. 하루가 버거워진다.");
-
-  if (state.time <= 0) {
-    // 시간을 다 태운 하루 — 벌칙 후 강제 종료
-    state.health = clamp(state.health - 5, 0, 100);
-    state.mood   = clamp(state.mood - 4, 0, 100);
-    if (state.health <= 0) return endGame(false, "지친 하루 끝에 몸이 무너졌다.");
-    if (state.mood <= 0)   return endGame(false, "지친 하루 끝에 마음이 꺾였다.");
-    advanceDay("시간을 다 써버렸다. 남은 일이 내일로 밀린다.");
-  } else if (state.turn >= DAY_TURNS) {
-    advanceDay("하루를 마쳤다. 잠시 회복.");
-  } else {
-    const kk = o.good ? "good" : o.bad ? "bad" : "note";
-    document.getElementById("fxConseq").textContent = o.good || o.bad || o.note || "";
-    document.getElementById("fxConseq").className = "conseq " + kk;
-    document.getElementById("fxNext").textContent = "계속";
-  }
-  renderTopbar();
-  if (state.day > GOAL_DAYS) return; // 승리/종료 화면이 이미 표시됨
-  show("effectView");
+/* 표시용 델타: 0이 아닌 것만, 자원 정의 순서대로 */
+function toDeltas(effects) {
+  return RESOURCES.filter(r => effects[r.key]).map(r => ({ key: r.key, amount: effects[r.key] }));
 }
 
-function advanceDay(reason) {
-  state.day += 1;
-  state.turn = 0;
-  state.health = clamp(state.health + 4, 0, 100);
-  state.mood   = clamp(state.mood + 3, 0, 100);
-  state.time   = 12;
-  if (state.day > GOAL_DAYS) {
-    endGame(true);
-    return;
-  }
-  const fx = document.getElementById("fxConseq");
-  fx.textContent = reason + " — " + state.day + "일차 시작";
-  fx.className = "conseq note";
-  document.getElementById("fxNext").textContent = state.day + "일차로";
+/* 선택지에 미리 그려 줄 델타 (VIEW가 정책 없이 쓰기 위한 RULE의 출력) */
+function previewDeltas(option) {
+  return toDeltas(withBaseCost(option.effects));
 }
 
-function endGame(win, why) {
-  document.getElementById("endTitle").textContent = win ? "생존" : "번아웃";
-  document.getElementById("endTitle").style.color = win ? "var(--mood)" : "var(--bad)";
-  document.getElementById("endWhy").textContent =
-    (win ? GOAL_DAYS + "일을 완주했다. " : "") + why;
-  document.getElementById("endBtn").textContent = "다시 살아보기";
-  show("endView");
+function deadKey(resources) {
+  const hit = RESOURCES.find(r => r.deadly && resources[r.key] <= r.min);
+  return hit ? hit.key : null;
 }
 
-/* ── 다음 카드 ── */
-function nextCard() {
-  // 팩을 순환시키되 같은 카드는 연속 금지
-  let idx = Math.floor(Math.random() * CARDS.length);
-  if (CARDS.length > 1 && state._last === idx) idx = (idx + 1) % CARDS.length;
-  state._last = idx;
-  drawCard(CARDS[idx]);
+/* T0 — 새 판 */
+function initialState() {
+  return {
+    phase: "card",
+    day: 1,
+    slot: 0,
+    resources: Object.fromEntries(RESOURCES.map(r => [r.key, r.start])),
+    cardId: null,
+    usedToday: [],
+    effect: null,
+    pending: null,
+    ending: null,
+  };
 }
 
-/* ── 시작/재시작 ── */
+/* 슬롯 -> 팩 -> 카드. 하루 안 중복은 usedToday로 막는다 */
+function drawSlot(prev) {
+  const pool = DAY_CYCLE.slots[prev.slot].packs.flatMap(id => PACKS[id].cards);
+  const fresh = pool.filter(id => !prev.usedToday.includes(id));
+  const pickFrom = (DAY_CYCLE.noRepeatInDay && fresh.length) ? fresh : pool;
+  const cardId = pickFrom[Math.floor(Math.random() * pickFrom.length)];
+  return { ...prev, phase: "card", cardId, usedToday: [...prev.usedToday, cardId], effect: null, pending: null };
+}
+
 function newGame() {
-  state = { ...START };
-  state._last = -1;
-  nextCard();
+  return drawSlot(initialState());
 }
 
-document.getElementById("fxNext").addEventListener("click", () => {
-  if (state.health <= 0 || state.mood <= 0) return;
-  nextCard();
-});
-document.getElementById("endBtn").addEventListener("click", newGame);
+function finish(s, win, why) {
+  s.pending = "end";
+  s.ending = { win, why };
+  s.effect.nextLabel = ENDINGS.nextLabel;
+  return s;
+}
 
-/* ── 스크롤·확대·당겨서 새로고침 차단 ── */
+/* 하루 넘김: day+1·시간 refill은 지금(T1) 적용, 카드 드로는 next(T3)에서 */
+function rollDay(s) {
+  s.day += 1;
+  s.resources = { ...s.resources, time: clamp("time", DAY_CYCLE.timeRefill) };
+  if (s.day > DAY_CYCLE.goalDays) {
+    s.effect.dayEnd.text += TEXTS.dayDone;
+    return finish(s, true, fill(ENDINGS.win, { days: DAY_CYCLE.goalDays }));
+  }
+  s.pending = "day";
+  s.effect.dayEnd.text += fill(TEXTS.dayStart, { day: s.day });
+  s.effect.nextLabel = fill(TEXTS.nextDay, { day: s.day });
+  return s;
+}
+
+/* T1 — 선택. 항상 effect로 간다(불변식 2: 선택 즉시 효과 표시) */
+function choose(prev, index) {
+  if (prev.phase !== "card") return prev;
+  const card = CARD[prev.cardId];
+  const option = card.options[index];
+  const gained = withBaseCost(option.effects);
+
+  const s = {
+    ...prev,
+    phase: "effect",
+    resources: applyEffects(prev.resources, gained),
+    effect: {
+      tag: fill(TEXTS.choiceTag, { tag: card.tag }),
+      title: option.label,
+      deltas: toDeltas(gained),
+      flavor: option.flavor,
+      conseq: option.conseq || null,
+      dayEnd: null,
+      nextLabel: TEXTS.nextContinue,
+    },
+    pending: "slot",
+  };
+
+  // ① deadly 자원 소진 -> 죽음
+  const dead = deadKey(s.resources);
+  if (dead) return finish(s, false, ENDINGS.death[dead].now);
+
+  // ② 시간을 다 태움 -> nightfall 적용 후 deadly 재검사
+  if (s.resources.time <= RES.time.min) {
+    s.resources = applyEffects(s.resources, DAY_CYCLE.nightfall.effects);
+    s.effect.dayEnd = { text: DAY_CYCLE.nightfall.text, deltas: toDeltas(DAY_CYCLE.nightfall.effects) };
+    const deadLate = deadKey(s.resources);
+    if (deadLate) return finish(s, false, ENDINGS.death[deadLate].nightfall);
+    return rollDay(s);
+  }
+
+  // ③ 마지막 슬롯 -> rest 적용 후 하루 넘김
+  if (s.slot + 1 >= DAY_CYCLE.slots.length) {
+    s.resources = applyEffects(s.resources, DAY_CYCLE.rest.effects);
+    s.effect.dayEnd = { text: DAY_CYCLE.rest.text, deltas: toDeltas(DAY_CYCLE.rest.effects) };
+    return rollDay(s);
+  }
+
+  // ④ 계속
+  return s;
+}
+
+/* T2·T3·T4 — 효과 화면의 "다음" */
+function next(prev) {
+  if (prev.phase !== "effect" || !prev.pending) return prev;
+  if (prev.pending === "end") return { ...prev, phase: "end" };
+  const cleared = { ...prev, effect: null };
+  return drawSlot(prev.pending === "day"
+    ? { ...cleared, slot: 0, usedToday: [] }
+    : { ...cleared, slot: prev.slot + 1 });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   VIEW — render(state) 한 방향. state를 바꾸지 않는다.
+   ═══════════════════════════════════════════════════════════════ */
+
+const UI = { bar: {}, num: {}, pips: {} };
+
+function el(id) { return document.getElementById(id); }
+
+function shape(key) {
+  return '<svg viewBox="0 0 12 12" aria-hidden="true">' + SHAPES[RES[key].shape] + "</svg>";
+}
+
+function chip(delta) {
+  const r = RES[delta.key];
+  const sign = delta.amount < 0 ? "" : "+";
+  return '<span class="cost ' + (delta.amount < 0 ? "neg" : "pos") + '" data-res="' + r.key + '">' +
+         shape(r.key) + "<span>" + r.ko + " " + sign + delta.amount + "</span></span>";
+}
+
+/* 상단 골격은 한 번만 조립 -> 이후 render는 값만 갱신(게이지 트랜지션 유지) */
+function buildTopbar() {
+  el("stats").innerHTML = RESOURCES.map(r => {
+    const head = '<div class="stat" data-res="' + r.key + '"><span class="ico">' + shape(r.key) + "</span>";
+    if (r.ui === "bar") return head + '<div class="barwrap"><div class="bar"></div></div><div class="num"></div></div>';
+    const pips = Array.from({ length: r.max }, () => '<div class="pip"></div>').join("");
+    return head + '<div class="rlbl">' + r.ko + '</div><div class="pips">' + pips + "</div></div>";
+  }).join("");
+
+  RESOURCES.forEach(r => {
+    const row = document.querySelector('.stat[data-res="' + r.key + '"]');
+    if (r.ui === "bar") {
+      UI.bar[r.key] = row.querySelector(".bar");
+      UI.num[r.key] = row.querySelector(".num");
+    } else {
+      UI.pips[r.key] = Array.from(row.querySelectorAll(".pip"));
+    }
+  });
+}
+
+function renderTopbar(s) {
+  el("dayNum").textContent = s.day;
+  RESOURCES.forEach(r => {
+    const v = s.resources[r.key];
+    if (r.ui === "bar") {
+      UI.bar[r.key].style.width = ((v - r.min) / (r.max - r.min)) * 100 + "%";
+      UI.num[r.key].textContent = v;
+    } else {
+      UI.pips[r.key].forEach((pip, i) => pip.classList.toggle("on", i < v));
+    }
+  });
+}
+
+function renderCard(s) {
+  const card = CARD[s.cardId];
+  el("cardTag").textContent = card.tag;
+  el("cardTitle").textContent = card.title;
+  el("cardText").textContent = card.text;
+
+  const box = el("options");
+  box.innerHTML = "";
+  card.options.forEach((option, i) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "opt";
+    btn.innerHTML = '<div class="line2"><span class="label">' + option.label + '</span><span class="costs">' +
+                    previewDeltas(option).map(chip).join("") + "</span></div>";
+    btn.addEventListener("click", () => onChoose(i));
+    box.appendChild(btn);
+  });
+}
+
+function renderEffect(fx) {
+  el("fxTag").textContent = fx.tag;
+  el("fxTitle").textContent = fx.title;
+  el("fxDelta").innerHTML = fx.deltas.map(chip).join("");
+  el("fxFlavor").textContent = fx.flavor;
+
+  const conseq = el("fxConseq");
+  conseq.className = fx.conseq ? "conseq " + fx.conseq.tone : "conseq hidden";
+  conseq.textContent = fx.conseq ? fx.conseq.text : "";
+
+  const dayEnd = el("fxDayEnd");
+  dayEnd.className = fx.dayEnd ? "conseq note dayend" : "conseq note dayend hidden";
+  dayEnd.innerHTML = fx.dayEnd
+    ? "<span>" + fx.dayEnd.text + '</span><span class="delta">' + fx.dayEnd.deltas.map(chip).join("") + "</span>"
+    : "";
+
+  el("fxNext").textContent = fx.nextLabel;
+}
+
+function renderEnd(ending) {
+  const title = el("endTitle");
+  title.textContent = ending.win ? ENDINGS.winTitle : ENDINGS.loseTitle;
+  title.style.color = ending.win ? "var(--mood)" : "var(--bad)";
+  el("endWhy").textContent = ending.why;
+  el("endBtn").textContent = ENDINGS.restart;
+}
+
+const VIEW_ID = { card: "cardView", effect: "effectView", end: "endView" };
+
+function render(s) {
+  renderTopbar(s);
+  Object.keys(VIEW_ID).forEach(phase => el(VIEW_ID[phase]).classList.toggle("hidden", phase !== s.phase));
+  if (s.phase === "card")   renderCard(s);
+  if (s.phase === "effect") renderEffect(s.effect);
+  if (s.phase === "end")    renderEnd(s.ending);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CONTROLLER — 이벤트 -> RULE -> render
+   ═══════════════════════════════════════════════════════════════ */
+
+let state = null;
+
+function onChoose(index) {
+  if (state.phase !== "card") return;
+  state = choose(state, index);
+  render(state);
+}
+
+function onNext() {
+  if (state.phase !== "effect") return;
+  state = next(state);
+  render(state);
+}
+
+function onRestart() {
+  if (state.phase !== "end") return;
+  state = newGame();
+  render(state);
+}
+
+buildTopbar();
+el("fxNext").addEventListener("click", onNext);
+el("endBtn").addEventListener("click", onRestart);
+state = newGame();
+render(state);
+
+/* ── 스크롤·확대·당겨서 새로고침 차단 (불변식 5) ── */
 document.addEventListener("touchmove", e => e.preventDefault(), { passive: false });
-["gesturestart","gesturechange","gestureend"].forEach(ev =>
+["gesturestart", "gesturechange", "gestureend"].forEach(ev =>
   document.addEventListener(ev, e => e.preventDefault())
 );
 document.addEventListener("dblclick", e => e.preventDefault());
-
-newGame();
 </script>
 </body>
 </html>
