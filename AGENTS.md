@@ -36,7 +36,10 @@
 ## 구현 규약
 
 - 스택: 외부 빌드 툴·프레임워크 없이 정적 HTML/CSS/JS 단일 파일(또는 몇 개의 평범한 정적 파일). `python3 -m http.server`로 로컬 제공.
-- 에셋: 이미지·폰트·라이브러리·CDN 금지. UI는 전부 SVG/CSS 도형 + 시스템 텍스트.
+- 에셋: 이미지·폰트·라이브러리·CDN 금지. UI는 전부 SVG/CSS 도형 + 시스템 텍스트. **게임 런타임에 의존성을 추가하지 않는다.**
+- 검사 도구(`tools/`, 게임 런타임 아님): `node tools/check.mjs`(무결성 규칙 1~6) · `node tools/sim.mjs [판수]`(밸런스) · `node tools/dom-smoke.mjs`(jsdom 있을 때만, 없으면 건너뜀).
+  도구는 `index.html`의 DATA·RULE 구역 경계 주석을 잘라 쓴다 — 경계 주석을 지우면 도구가 깨진다.
+  카드·자원·사이클의 숫자나 스키마를 건드린 Loop은 `check.mjs` 통과를 완료 조건에 넣는다.
 - 뷰포트: 세로 고정(모바일 우선), 화면 하나에 담고 스크롤 없음. 뷰포트 단위(`dvh`) 기준.
 - 상태는 한 곳(JS 객체)에 모으고, 렌더는 상태 -> DOM 단방향으로.
 - 숫자 밸런스는 그때그때 최소치만 정한다. 공 하나 섞지 않는다.
@@ -88,13 +91,14 @@ Loop이 **실제로 필요로 만든** 시스템만 여기에 승격한다. 미�
 
 ```
 PACKS  { <packId>: { ko, cards: [cardId, ...] } }   ← 팩이 카드를 참조(단방향). 카드는 자기 팩을 모른다
-CARD   { id, tag, title, text, options: [OPTION] }   ← 소재는 MATERIALS.md에서 픽션화
+CARD   { id, tag, title, text, minDay?, options: [OPTION] }   ← 소재는 MATERIALS.md에서 픽션화
 OPTION { label, flavor, effects: {<resourceKey>: number}, conseq: {tone, text} }
 ```
 
 - `effects`에 없는 자원 = 0. 부호·색·라벨 같은 **표시는 VIEW가 계산**하고, DATA는 authored 값만 가진다.
 - 시간 표시·적용값 = `effects.time - DAY_CYCLE.baseTimeCost`.
 - `conseq.tone` ∈ `good` \| `bad` \| `note`.
+- `minDay`(선택, 기본 1) = 이 카드가 후보에 드는 **첫 일차**. 뒤 일차에 무거운 카드를 섞어 압박 곡선을 만드는 장치이며, 시스템 추가 없이 DATA만으로 굴곡을 만든다. 팩은 장소, 일차는 카드가 정한다.
 
 ### 하루 사이클 스키마 `DAY_CYCLE`
 
@@ -109,6 +113,9 @@ OPTION { label, flavor, effects: {<resourceKey>: number}, conseq: {tone, text} }
 | `nightfall` | 시간을 다 태웠을 때 `{effects, text}` |
 
 확정값(Loop 2는 기존 숫자를 그대로 옮기기만 한다): `goalDays 3`, `baseTimeCost 1`, `timeRefill 12`, `rest {health:+4, mood:+3}`, `nightfall {health:-5, mood:-4}`, 슬롯 5칸 = 아침 → 아침·학교 → 학교 → 학교·집 → 집.
+
+**드로 규칙**: `slots[slot].packs`의 카드 중 `minDay ≤ day`인 것 → `usedToday`에 없는 것 → 무작위 1장.
+그날 후보가 전부 이미 나왔으면 중복을 허용한다(풀 부족 시 자동 해제).
 
 ### 상태 전이
 
@@ -131,4 +138,5 @@ OPTION { label, flavor, effects: {<resourceKey>: number}, conseq: {tone, text} }
 2. 모든 팩은 `slots`에서 최소 한 번 참조된다(고아 팩 금지 = 죽은 데이터 금지).
 3. `effects`·`rest`·`nightfall`의 키는 `RESOURCES.key` 부분집합이다.
 4. `conseq.tone`은 `good|bad|note` 중 하나.
-5. 각 슬롯의 후보 카드는 1장 이상, 하루 길이만큼 **중복 없이** 뽑을 수 있어야 한다.
+5. 각 슬롯의 후보 카드는 1장 이상이고, 하루 길이만큼 **중복 없이** 뽑을 수 있어야 한다(일차별로 `minDay`를 반영해 검사).
+6. `minDay`는 1 이상 정수. 카드의 `minDay`가 올라가도 어느 일차에서도 슬롯 후보가 비지 않아야 한다(규칙 5가 함께 검사).

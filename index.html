@@ -214,8 +214,10 @@ const SHAPES = {
   clock:  '<rect x="2" y="4" width="8" height="6" rx="1" fill="currentColor"/><rect x="5" y="3" width="2" height="2" fill="currentColor"/>',
 };
 
-/* ③ 카드 — 순수 창작 픽션(소재: MATERIALS.md). effects의 키는 RESOURCES.key */
+/* ③ 카드 — 순수 창작 픽션(소재: MATERIALS.md). effects의 키는 RESOURCES.key
+   minDay = 이 카드가 등장하기 시작하는 일차(없으면 1일차부터). 뒤로 갈수록 무겁다. */
 const CARDS = [
+  /* ── 1일차부터 — 익숙한 하루 ─────────────────────────── */
   {
     id: "dawn",
     tag: "새벽 6시",
@@ -223,11 +225,11 @@ const CARDS = [
     text: "몸은 천 근이고, 오늘은 1교시부터 체육이다. 아이들은 아직 자고 있다.",
     options: [
       { label: "일어나 몸부터 푼다",         flavor: "냉수를 마시고 스트레칭. 몸이 깨어나는 게 느껴진다.",
-        effects: { health: -5, mood: +5, time: -1 }, conseq: { tone: "good", text: "몸은 힘들지만 기분은 맑아졌다." } },
+        effects: { health: -4, mood: +3, time: -1 }, conseq: { tone: "good", text: "몸은 힘들지만 기분은 맑아졌다." } },
       { label: "10분만 더 잔다",             flavor: "눈을 감자마자 알람이 다시 울린다. 허겁지겁 뛰어나간다.",
-        effects: { health: +3, mood: -2, time: -1 }, conseq: { tone: "bad", text: "잠은 보충했지만 마음이 조급하다." } },
+        effects: { health: +2, mood: -6, time: -1 }, conseq: { tone: "bad", text: "잠은 보충했지만 마음이 조급하다." } },
       { label: "아이들 등교 준비부터 챙긴다", flavor: "도시락을 싸고 가방을 챙겨준다. 마음은 놓인다.",
-        effects: { health: -4, mood: +4, time: -2 }, conseq: { tone: "good", text: "아이들 얼굴을 보고 나가니 한결 낫다." } },
+        effects: { health: -6, mood: +2, time: -2 }, conseq: { tone: "good", text: "아이들 얼굴을 보고 나가니 한결 낫다." } },
     ],
   },
   {
@@ -237,11 +239,11 @@ const CARDS = [
     text: "수업 준비 시간인데, 통화하듯 긴 이야기가 시작됐다.",
     options: [
       { label: "끝까지 들어 드린다",         flavor: "이야기는 길어졌고, 준비 시간은 사라졌다.",
-        effects: { health: 0, mood: -4, time: -2 }, conseq: { tone: "bad", text: "공감은 했지만 수업 준비가 밀렸다. 기분이 무겁다." } },
+        effects: { health: -2, mood: -5, time: -2 }, conseq: { tone: "bad", text: "공감은 했지만 수업 준비가 밀렸다. 기분이 무겁다." } },
       { label: "정중히 끊고 수업 준비",       flavor: "다음에 상담을 잡아 드린다. 숨 고르고 교실로.",
-        effects: { health: -1, mood: 0, time: 0 }, conseq: { tone: "good", text: "수업 준비가 덜 밀렸다. 조금은 미안하지만." } },
+        effects: { health: -2, mood: -1 }, conseq: { tone: "good", text: "수업 준비가 덜 밀렸다. 조금은 미안하지만." } },
       { label: "아이 얘기라 무시 못 한다",    flavor: "마음을 쏟아 들었다. 교무실 복귀는 늦어졌다.",
-        effects: { health: -5, mood: +3, time: -2 }, conseq: { tone: "good", text: "학부모가 안심하는 모습에 보람이 든다." } },
+        effects: { health: -6, time: -3 }, conseq: { tone: "good", text: "학부모가 안심하는 모습에 보람이 든다." } },
     ],
   },
   {
@@ -251,11 +253,11 @@ const CARDS = [
     text: "급식실 갈 시간도 빠듯한데, 외부 강사 회의가 먼저 잡혀 있다.",
     options: [
       { label: "급하게 후루룩 먹는다",       flavor: "5분 만에 비운 밥. 허겁지겁 회의실로.",
-        effects: { health: +2, mood: -5, time: 0 }, conseq: { tone: "bad", text: "어쨌든 밥은 먹었지만 마음만 급했다." } },
+        effects: { health: +1, mood: -5 }, conseq: { tone: "bad", text: "어쨌든 밥은 먹었지만 마음만 급했다." } },
       { label: "거르고 회의에 집중",         flavor: "회의는 잘 끝났지만 속이 비었다.",
-        effects: { health: -7, mood: -1, time: +1 }, conseq: { tone: "bad", text: "허기가 밀려온다. 오후가 위험하다." } },
+        effects: { health: -8, mood: -2, time: +1 }, conseq: { tone: "bad", text: "허기가 밀려온다. 오후가 위험하다." } },
       { label: "잠깐 운동장을 돈다",         flavor: "밥 대신 잠깐 걸으며 기운을 돌린다.",
-        effects: { health: -2, mood: +4, time: -1 }, conseq: { tone: "good", text: "바깥바람이 머리를 식혔다." } },
+        effects: { health: -3, mood: +2, time: -1 }, conseq: { tone: "good", text: "바깥바람이 머리를 식혔다." } },
     ],
   },
   {
@@ -265,11 +267,11 @@ const CARDS = [
     text: "울먹이는 아이를 데리고 양호실로 달려야 한다.",
     options: [
       { label: "안심시키고 담임을 부른다",    flavor: "아이 손을 잡고 기다려준다. 다음 수업은 약속을 조정.",
-        effects: { health: -2, mood: +3, time: -1 }, conseq: { tone: "good", text: "아이가 웃음을 되찾았다." } },
+        effects: { health: -4, mood: +2, time: -1 }, conseq: { tone: "good", text: "아이가 웃음을 되찾았다." } },
       { label: "빨리 처리하고 수업 복귀",     flavor: "효율적으로 처리. 수업은 제시간에 시작한다.",
-        effects: { health: 0, mood: -4, time: +1 }, conseq: { tone: "bad", text: "아이를 두고 온 게 마음에 걸린다." } },
+        effects: { health: -1, mood: -6, time: +1 }, conseq: { tone: "bad", text: "아이를 두고 온 게 마음에 걸린다." } },
       { label: "사고 기록까지 꼼꼼히 남긴다", flavor: "보고서를 쓰느라 시간이 길어졌다.",
-        effects: { health: -4, mood: 0, time: -2 }, conseq: { tone: "good", text: "기록을 남겨 두니 마음은 든든하다." } },
+        effects: { health: -4, mood: -2, time: -2 }, conseq: { tone: "good", text: "기록을 남겨 두니 마음은 든든하다." } },
     ],
   },
   {
@@ -279,11 +281,11 @@ const CARDS = [
     text: "길어질 기색이다. 오늘도 집에 늦는다.",
     options: [
       { label: "끝까지 남는다",              flavor: "회의는 길어졌다. 밤하늘 아래 퇴근.",
-        effects: { health: -6, mood: -4, time: -2 }, conseq: { tone: "bad", text: "몸도 마음도 축났다." } },
+        effects: { health: -8, mood: -4, time: -2 }, conseq: { tone: "bad", text: "몸도 마음도 축났다." } },
       { label: "조퇴하고 아이들 픽업",        flavor: "가정사를 이유로 먼저 나온다. 마음은 급하다.",
-        effects: { health: 0, mood: +3, time: +1 }, conseq: { tone: "note", text: "눈치는 보였지만 집에선 안도했다." } },
+        effects: { health: -2, mood: +2, time: +1 }, conseq: { tone: "note", text: "눈치는 보였지만 집에선 안도했다." } },
       { label: "녹음 정리 요청을 자처",       flavor: "끝까지 있되, 몰입해서 듣는다.",
-        effects: { health: -2, mood: -3, time: -2 }, conseq: { tone: "note", text: "길었지만 몰입하니 오히려 덜 지쳤다." } },
+        effects: { health: -4, mood: -4, time: -2 }, conseq: { tone: "note", text: "길었지만 몰입하니 오히려 덜 지쳤다." } },
     ],
   },
   {
@@ -293,11 +295,39 @@ const CARDS = [
     text: "해열제를 먹였지만 열이 안 떨어진다. 병원은 벌써 닫혔다.",
     options: [
       { label: "새벽까지 옆에서 간호",       flavor: "미지근한 물수건을 갈아 주며 밤을 샌다.",
-        effects: { health: -7, mood: +3, time: -2 }, conseq: { tone: "good", text: "해가 뜰 무렵 열이 내렸다. 안도감이 크다." } },
+        effects: { health: -8, mood: +2, time: -2 }, conseq: { tone: "good", text: "해가 뜰 무렵 열이 내렸다. 안도감이 크다." } },
       { label: "배우자와 교대한다",          flavor: "번갈아 짧게라도 잔다.",
-        effects: { health: -2, mood: -1, time: -1 }, conseq: { tone: "good", text: "조금씩 자 둔 덕에 그나마 버틸 만하다." } },
+        effects: { health: -4, mood: -1, time: -1 }, conseq: { tone: "good", text: "조금씩 자 둔 덕에 그나마 버틸 만하다." } },
       { label: "응급실에 간다",              flavor: "밤새 진료를 기다린다. 결과적으로 밤을 꼬박 샜다.",
-        effects: { health: -6, mood: -5, time: -3 }, conseq: { tone: "bad", text: "아이는 안정됐지만 몸이 남아나질 않는다." } },
+        effects: { health: -8, mood: -5, time: -3 }, conseq: { tone: "bad", text: "아이는 안정됐지만 몸이 남아나질 않는다." } },
+    ],
+  },
+  {
+    id: "bag2",
+    tag: "새벽 6시 40분",
+    title: "가방 두 개를 챙긴다.",
+    text: "한쪽 가방에서 준비물이 빠진 것을 발견한다. 현관 시계가 조금씩 앞으로 간다.",
+    options: [
+      { label: "전부 챙겨서 내보낸다",       flavor: "물병까지 채워 어깨에 걸어 준다. 문을 나서는 발이 무겁다.",
+        effects: { health: -4, mood: +4, time: -1 }, conseq: { tone: "good", text: "두 아이가 나란히 나가는 걸 보고 나서 출발했다." } },
+      { label: "내 것만 챙기고 나선다",       flavor: "준비물은 저녁에 다시 보기로 한다. 발걸음은 가볍다.",
+        effects: { mood: -6, time: +1 }, conseq: { tone: "bad", text: "차에 앉아서야 빠진 것이 계속 생각났다." } },
+      { label: "배우자와 동선을 맞춘다",     flavor: "누가 어디서 내려 주는지 두 줄을 맞춘다. 그 사이 시계는 더 갔다.",
+        effects: { health: -2, mood: -4, time: -1 }, conseq: { tone: "note", text: "맞춰 놓고 나니 오늘 하루가 조금은 덜 어지럽다." } },
+    ],
+  },
+  {
+    id: "safe",
+    tag: "오전 8시 20분",
+    title: "세이프존에 아이들이 먼저 와 있다.",
+    text: "교무실 문을 열자마자 아이들 목소리가 들린다. 체육복으로 갈아입을 시간이 밀린다.",
+    options: [
+      { label: "먼저 온 아이들을 맞이한다",   flavor: "이름을 부르며 자리를 잡아 준다. 수업 준비는 뒤로 밀렸다.",
+        effects: { health: -4, mood: +3, time: -2 }, conseq: { tone: "good", text: "먼저 온 아이들이 심심하지 않게 시작했다." } },
+      { label: "교구부터 옮기고 준비를 끝낸다", flavor: "아이들끼리 앉아 있게 하고 장비를 먼저 나른다.",
+        effects: { health: -6, mood: -2, time: +1 }, conseq: { tone: "note", text: "1교시는 편해졌다. 몸은 그만큼 앞당겨 썼다." } },
+      { label: "자리만 잡아 주고 서류 한 장", flavor: "결재선에 걸린 한 장을 먼저 끝낸다. 아이들은 조용히 앉아 있다.",
+        effects: { mood: -6 }, conseq: { tone: "bad", text: "서류는 넘겼는데, 아이들 등 뒤로 지나갈 때 발이 무거웠다." } },
     ],
   },
   {
@@ -307,20 +337,187 @@ const CARDS = [
     text: "이제야 혼자만의 시간. 내일 수업 자료도 밀려 있다.",
     options: [
       { label: "정리하고 곧장 잔다",         flavor: "자료는 미룬 채 이불 속으로. 눈이 감긴다.",
-        effects: { health: +4, mood: +2, time: +1 }, conseq: { tone: "good", text: "잠은 최고의 회복제다." } },
+        effects: { health: +3, mood: +2, time: +1 }, conseq: { tone: "good", text: "잠은 최고의 회복제다." } },
       { label: "밤새 수업 자료를 만든다",     flavor: "눈을 비비며 자료를 완성한다.",
-        effects: { health: -7, mood: -4, time: -2 }, conseq: { tone: "bad", text: "자료는 끝냈지만 몸이 비명을 지른다." } },
+        effects: { health: -9, mood: -5, time: -2 }, conseq: { tone: "bad", text: "자료는 끝냈지만 몸이 비명을 지른다." } },
       { label: "잠깐 혼자 숨을 고른다",       flavor: "창밖을 멍하니 바라본다. 10분도 안 돼 잠들었다.",
-        effects: { health: +2, mood: +3, time: 0 }, conseq: { tone: "good", text: "혼자만의 멍때림. 회복이 크다." } },
+        effects: { mood: +2 }, conseq: { tone: "good", text: "혼자만의 멍때림. 회복이 크다." } },
+    ],
+  },
+  {
+    id: "bath",
+    tag: "저녁 8시",
+    title: "둘을 씻기고 재워야 한다.",
+    text: "한 아이는 졸리고 한 아이는 아직 놀겠다고 한다. 집안이 조용해질 시간이 아직 멀다.",
+    options: [
+      { label: "둘 다 씻기고 재운다",         flavor: "번갈아 머리를 감기고 이불까지 덮어 준다. 허리가 먼저 지친다.",
+        effects: { health: -6, mood: +2, time: -2 }, conseq: { tone: "good", text: "두 아이가 나란히 잠들었다. 그 얼굴을 보고 나온다." } },
+      { label: "하나씩 나눠 맡는다",         flavor: "한 명은 내가, 한 명은 배우자가. 각자 방으로 들어간다.",
+        effects: { health: -4, time: -1 }, conseq: { tone: "note", text: "빨리 끝났다. 대신 오늘 하루를 물어볼 틈은 없었다." } },
+      { label: "영상 하나로 넘긴다",         flavor: "화면 앞에 앉히고 나는 설거지로 간다. 집이 조용해진다.",
+        effects: { mood: -6, time: +1 }, conseq: { tone: "bad", text: "조용해진 거실에서, 이게 맞나 싶은 생각이 잠깐 들었다." } },
+    ],
+  },
+  {
+    id: "call",
+    tag: "점심",
+    title: "메시지가 한 줄 와 있다.",
+    text: "짧은 문장이다. \"아이에게 무슨 일이 있었는지 알고 싶습니다.\" 급식실로 가는 길에 확인했다.",
+    options: [
+      { label: "지금 바로 답장을 쓴다",       flavor: "식판 앞에서 문장을 고쳐 쓴다. 밥은 반쯤 남았다.",
+        effects: { health: -2, mood: -2, time: -2 }, conseq: { tone: "note", text: "답은 갔고, 점심시간은 사라졌다." } },
+      { label: "수업이 다 끝나고 답한다",     flavor: "알림을 지우고 오후 수업으로 넘어간다. 문장이 머릿속에 남는다.",
+        effects: { mood: -8, time: +1 }, conseq: { tone: "bad", text: "미뤄 둔 답장이 오후 내내 뒤통수에 붙어 있었다." } },
+      { label: "담임 선생님께 먼저 묻는다",   flavor: "상황을 한 번 확인하고 답을 쓰기로 한다. 복도 왕복이 길었다.",
+        effects: { health: -4, mood: +2, time: -2 }, conseq: { tone: "good", text: "두 사람이 아는 것이 달라서, 미리 맞춰 둔 게 컸다." } },
+    ],
+  },
+  {
+    id: "errand",
+    tag: "방과 후",
+    title: "학부모님이 교무실로 오셨다.",
+    text: "아이가 과제물을 두고 갔는데 교실은 이미 잠겨 있다. 남아 있던 사람이 응대한다.",
+    options: [
+      { label: "직접 찾아 드리고 내려드린다", flavor: "교실을 다시 열고 물건을 찾아 드린다. 어둑해진 복도를 내려온다.",
+        effects: { health: -4, mood: +2, time: -2 }, conseq: { tone: "good", text: "고맙다는 인사를 듣고 나오니 발걸음이 조금 가벼웠다." } },
+      { label: "담임 선생님께 연결한다",     flavor: "연락처를 확인해 넘긴다. 통화는 내 자리에서 이어졌다.",
+        effects: { health: -2, mood: -4, time: -1 }, conseq: { tone: "note", text: "일은 돌아갔지만 내 자리에서 벌어진 일이었다." } },
+      { label: "미안하다고만 말한다",         flavor: "문이 잠겼다는 사실만 전하고 돌아선다.",
+        effects: { mood: -8, time: +1 }, conseq: { tone: "bad", text: "돌아서는 등 뒤가 오래 기억에 남았다." } },
+    ],
+  },
+
+  /* ── 2일차부터 — 압박이 커진다 ───────────────────────── */
+  {
+    id: "rain",
+    tag: "오전 8시 40분",
+    minDay: 2,
+    title: "오후에 비 예보가 있다.",
+    text: "체육관 사용 여부가 오늘 수업 전부를 바꾼다. 나머지 반 시간표도 같이 흔들린다.",
+    options: [
+      { label: "체육관을 먼저 잡는다",       flavor: "아침에 내려가 체육관 열쇠를 확보한다. 다른 반 일정도 조정한다.",
+        effects: { health: -3, time: -2 }, conseq: { tone: "good", text: "장소를 잡아 두니 오후가 예측 가능해졌다." } },
+      { label: "우산 챙겨 운동장으로 나간다", flavor: "비가 오면 그때 접기로 하고 나간다. 바람이 차다.",
+        effects: { health: -6, mood: -4, time: +1 }, conseq: { tone: "bad", text: "빗줄기 속에서 반을 정리하느라 진이 빠졌다." } },
+      { label: "교실 체육으로 바꾼다",       flavor: "자리를 밀고 책상을 옮긴다. 아이들 표정이 금방 시들해진다.",
+        effects: { health: -2, mood: -7, time: -1 }, conseq: { tone: "bad", text: "안전하게 끝냈지만 아쉬운 얼굴들이 남았다." } },
+    ],
+  },
+  {
+    id: "complain",
+    tag: "오전 9시",
+    minDay: 2,
+    title: "아침에 전화가 왔다.",
+    text: "팀 편성 이야기로 시작했는데 통화는 다른 곳으로 흘러가고 있다. 다음 반이 아직 기다린다.",
+    options: [
+      { label: "끝까지 듣고 정리해 답한다",   flavor: "말이 끝날 때까지 기다렸다. 통화가 끝난 뒤 쉬는 시간이 남지 않았다.",
+        effects: { health: -4, mood: -6, time: -3 }, conseq: { tone: "note", text: "오해는 풀렸다. 대신 오전 수업 두 개가 급해졌다." } },
+      { label: "기록을 남기고 절차대로 넘긴다", flavor: "들은 내용을 시간 순서로 적어 두고 담당 선생님께 넘긴다.",
+        effects: { health: -2, mood: -4, time: -2 }, conseq: { tone: "note", text: "남긴 기록이 나를 지켜 줄 거라고 스스로에게 말했다." } },
+      { label: "혼자 오래 삭힌다",           flavor: "어디에도 꺼내지 않고 앉아 있었다. 오후 내내 그 문장이 다시 돌아간다.",
+        effects: { mood: -10, time: +1 }, conseq: { tone: "bad", text: "아무 일도 없던 것처럼 수업을 했는데, 속은 계속 무거웠다." } },
+    ],
+  },
+  {
+    id: "crowd",
+    tag: "3교시",
+    minDay: 2,
+    title: "서른 명이 운동장에 서 있다.",
+    text: "줄을 세우는 것만으로 5분이 지난다. 오늘은 공을 두 개만 꺼내기로 한다.",
+    options: [
+      { label: "대기 조를 만들어 돌린다",     flavor: "기다리는 조에게 규칙 설명을 맡긴다. 목은 아프지만 흐름은 산다.",
+        effects: { health: -4, time: -2 }, conseq: { tone: "good", text: "다들 한 번씩 공을 잡았다. 목소리를 많이 썼다." } },
+      { label: "안전선부터 다시 잡는다",     flavor: "라인을 새로 그리고 구역을 나눈다. 시작이 10분 늦었다.",
+        effects: { health: -4, mood: -4, time: -3 }, conseq: { tone: "note", text: "늦게 시작했지만 부딪히는 일은 없었다." } },
+      { label: "계획대로 밀어붙인다",         flavor: "정해 둔 대로 돌린다. 뛰고 또 뛰었다.",
+        effects: { health: -8, mood: -4, time: +1 }, conseq: { tone: "bad", text: "수업은 채웠다. 종이 울리자 무릎이 풀렸다." } },
+    ],
+  },
+  {
+    id: "bigday",
+    tag: "오후 3시",
+    minDay: 2,
+    title: "아이 어린이집 행사가 오늘 오후에 있다.",
+    text: "알림은 일주일 전에 왔고, 그동안 미뤄 둔 결정이 지금 남았다.",
+    options: [
+      { label: "일정을 비우고 다녀온다",     flavor: "오후를 비우고 다녀온다. 밀린 일은 그대로 남아 있다.",
+        effects: { health: -2, mood: +4, time: -4 }, conseq: { tone: "good", text: "아이 얼굴을 봤다. 남은 일은 내일의 내가 한다." } },
+      { label: "배우자에게 부탁한다",         flavor: "전화로 부탁하고 다시 업무 화면으로 돌아간다.",
+        effects: { health: -2, mood: -8, time: +1 }, conseq: { tone: "bad", text: "부탁은 됐다. 대신 그 통화가 하루 종일 남았다." } },
+      { label: "이번엔 못 간다고 말한다",     flavor: "짧게 답하고 통화를 끊는다. 교무실은 조용하다.",
+        effects: { health: -2, mood: -10, time: +2 }, conseq: { tone: "bad", text: "일은 끝났다. 마음은 하나도 끝나지 않았다." } },
+    ],
+  },
+  {
+    id: "pickup",
+    tag: "오후 4시 30분",
+    minDay: 2,
+    title: "오늘 누가 데리러 가는가.",
+    text: "문자 두 줄이 오갔고 아직 답이 정해지지 않았다. 책상 위에는 마치지 못한 일이 남아 있다.",
+    options: [
+      { label: "내가 데리러 간다",           flavor: "가방을 챙겨 나선다. 남은 일은 노트북과 함께 집으로 간다.",
+        effects: { health: -4, mood: +2, time: -3 }, conseq: { tone: "good", text: "문 앞에서 달려 나오는 걸 봤다. 집에 가서 다시 앉았다." } },
+      { label: "배우자에게 전화한다",         flavor: "상황을 설명하고 부탁한다. 목소리가 조금 짧아졌다.",
+        effects: { health: -2, mood: -6, time: +1 }, conseq: { tone: "bad", text: "해결은 됐는데 통화 끝의 침묵이 남았다." } },
+      { label: "퇴근 시간을 지킨다",         flavor: "오늘은 남기로 한다. 알림을 확인하고 화면을 다시 연다.",
+        effects: { mood: -10 }, conseq: { tone: "bad", text: "일은 진도가 나갔다. 대신 집에 갈 때까지 마음이 무거웠다." } },
+    ],
+  },
+
+  /* ── 3일차부터 — 결말의 무게 ─────────────────────────── */
+  {
+    id: "mirror",
+    tag: "오전 8시 30분",
+    minDay: 3,
+    title: "세이프존에 일찍 온 아이가 인사한다.",
+    text: "부모님 출근 시간에 맞춰 나온 아이. 내 아이도 지금쯤 어딘가에 맡겨져 있다.",
+    options: [
+      { label: "내 아이에게 사진을 보낸다",   flavor: "짧게 한 장 보내고 답을 기다린다. 답장이 늦게 온다.",
+        effects: { health: -2, mood: +4, time: -2 }, conseq: { tone: "good", text: "웃는 사진 한 장이 오전을 버티게 했다." } },
+      { label: "그냥 넘긴다",                 flavor: "핸드폰을 주머니에 넣고 체육복으로 갈아입는다.",
+        effects: { health: -2, mood: -8, time: +1 }, conseq: { tone: "bad", text: "생각하지 않으려고 손을 더 빨리 움직였다." } },
+      { label: "먼저 온 아이를 챙긴다",       flavor: "옆자리에 앉혀 두고 오늘 활동을 미리 설명해 준다.",
+        effects: { health: -6, mood: -1 }, conseq: { tone: "note", text: "남의 아이를 챙기면서 내 아이 생각을 지웠다." } },
+    ],
+  },
+  {
+    id: "blank",
+    tag: "오후 4시",
+    minDay: 3,
+    title: "업무분장표에 빈칸이 하나 있다.",
+    text: "내려받은 표의 한 칸이 비어 있고, 아무도 자기 이름을 넣지 않았다. 마감은 내일이다.",
+    options: [
+      { label: "누구 일인지 다시 묻는다",     flavor: "물어보러 가는 길이 길다. 대답은 돌아오지 않는다.",
+        effects: { health: -4, mood: -2, time: -2 }, conseq: { tone: "note", text: "묻는 것도 일이라는 걸 오늘 배웠다." } },
+      { label: "일단 내가 맡는다",           flavor: "빈칸에 이름을 넣고 저장한다. 그 순간 일이 하나 늘었다.",
+        effects: { health: -8, mood: -6, time: -2 }, conseq: { tone: "bad", text: "표는 채워졌다. 내 몫은 내일부터 두 배다." } },
+      { label: "옆자리 동료와 나눠 맡는다",   flavor: "몇 줄을 나눠 적고 서로 확인한다. 둘 다 늦게 퇴근한다.",
+        effects: { health: -4, time: -2 }, conseq: { tone: "good", text: "혼자 안고 있지 않아도 된다는 걸 알았다." } },
+    ],
+  },
+  {
+    id: "ours",
+    tag: "밤 10시",
+    minDay: 3,
+    title: "오늘은 서로 말이 짧았다.",
+    text: "둘 다 앉아 있는데 먼저 꺼내는 쪽이 없다. 설거지 소리만 남아 있다.",
+    options: [
+      { label: "내 하루를 먼저 말한다",       flavor: "오늘 서 있었던 시간을 이야기한다. 듣던 쪽이 고개를 끄덕인다.",
+        effects: { health: -4, mood: +2, time: -2 }, conseq: { tone: "good", text: "설명하려고 만든 말이 아니라 그냥 말했다." } },
+      { label: "상대 하루를 먼저 듣는다",     flavor: "먼저 묻는다. 대답이 길어지고 시간이 간다.",
+        effects: { health: -2, time: -2 }, conseq: { tone: "good", text: "서로 다른 하루를 하나씩 나눠 가졌다." } },
+      { label: "오늘은 말없이 잔다",         flavor: "불을 끄고 각자 돌아눕는다. 천장이 오래 보였다.",
+        effects: { mood: -10, time: +1 }, conseq: { tone: "bad", text: "몸은 쉬었는데 마음은 하루를 더 살았다." } },
     ],
   },
 ];
 
-/* ④ 팩 — 카드 id를 참조한다(단방향). 카드 7장의 시각 태그를 그대로 묶었다 */
+/* ④ 팩 — 카드 id를 참조한다(단방향). 팩 = 장소, 일차는 카드의 minDay가 정한다.
+   카드는 정확히 한 팩에만 속한다(무결성 규칙 1). 어느 슬롯에서 나올 수 있는지는 slots가 정한다 */
 const PACKS = {
-  morning: { ko: "아침", cards: ["dawn", "parent"] },
-  school:  { ko: "학교", cards: ["lunch", "injury", "meeting"] },
-  home:    { ko: "집",   cards: ["fever", "night"] },
+  morning: { ko: "아침", cards: ["dawn", "bag2", "safe", "parent", "rain", "mirror"] },
+  school:  { ko: "학교", cards: ["lunch", "injury", "meeting", "call", "errand", "complain", "crowd", "blank"] },
+  home:    { ko: "집",   cards: ["fever", "night", "bath", "bigday", "pickup", "ours"] },
 };
 
 /* ⑤ 하루 사이클 — 하루 길이 = slots.length */
@@ -421,10 +618,18 @@ function initialState() {
   };
 }
 
-/* 슬롯 -> 팩 -> 카드. 하루 안 중복은 usedToday로 막는다 */
+/* 슬롯 -> 팩 -> 카드. 하루 안 중복은 usedToday로 막는다.
+   minDay가 있는 카드는 그 일차부터 후보에 든다(뒤로 갈수록 무거운 카드가 섞인다) */
+function poolAt(slotIndex, day, exclude) {
+  const packs = DAY_CYCLE.slots[slotIndex].packs;
+  const all = packs.flatMap(id => PACKS[id].cards);
+  const inDay = all.filter(id => (CARD[id].minDay || 1) <= day);
+  return inDay.filter(id => !exclude.includes(id));
+}
+
 function drawSlot(prev) {
-  const pool = DAY_CYCLE.slots[prev.slot].packs.flatMap(id => PACKS[id].cards);
-  const fresh = pool.filter(id => !prev.usedToday.includes(id));
+  const fresh = poolAt(prev.slot, prev.day, prev.usedToday);
+  const pool = poolAt(prev.slot, prev.day, []);
   const pickFrom = (DAY_CYCLE.noRepeatInDay && fresh.length) ? fresh : pool;
   const cardId = pickFrom[Math.floor(Math.random() * pickFrom.length)];
   return { ...prev, phase: "card", cardId, usedToday: [...prev.usedToday, cardId], effect: null, pending: null };
