@@ -38,6 +38,7 @@
 - 스택: 외부 빌드 툴·프레임워크 없이 정적 HTML/CSS/JS 단일 파일(또는 몇 개의 평범한 정적 파일). `python3 -m http.server`로 로컬 제공.
 - 에셋: 이미지·폰트·라이브러리·CDN 금지. UI는 전부 SVG/CSS 도형 + 시스템 텍스트. **게임 런타임에 의존성을 추가하지 않는다.**
 - 검사 도구(`tools/`, 게임 런타임 아님): `node tools/check.mjs`(무결성 규칙 1~6) · `node tools/sim.mjs [판수]`(밸런스) · `node tools/dom-smoke.mjs`(jsdom 있을 때만, 없으면 건너뜀).
+  실제 CSS·모바일 검사: `node tools/motion-smoke.mjs`(저장소 밖에 Playwright·Chromium 설치 필요, `CHROMIUM_PATH`·`GAME_URL` 선택). 게임 런타임 의존성은 아니다.
   도구는 `index.html`의 DATA·RULE 구역 경계 주석을 잘라 쓴다 — 경계 주석을 지우면 도구가 깨진다.
   카드·자원·사이클의 숫자나 스키마를 건드린 Loop은 `check.mjs` 통과를 완료 조건에 넣는다.
 - 뷰포트: 세로 고정(모바일 우선), 화면 하나에 담고 스크롤 없음. 뷰포트 단위(`dvh`) 기준.
@@ -75,7 +76,7 @@ Loop이 **실제로 필요로 만든** 시스템만 여기에 승격한다. 미�
 | `resources` | `{health, mood, time}` | 자원 현재값. 키는 `RESOURCES`에서 옴 |
 | `cardId` | string | 현재 카드 |
 | `usedToday` | string[] | 오늘 이미 나온 카드(중복 방지). 새 하루에 리셋 |
-| `effect` | null \| 페이로드 | `{tag, title, deltas, flavor, conseq, dayEnd, nextLabel}` — 효과 화면이 표시할 것 전부 |
+| `effect` | null \| 페이로드 | `{tag, title, deltas, beforeResources, flavor, conseq, dayEnd, nextLabel}` — 효과 화면이 표시할 것 전부 |
 | `pending` | null \| `slot` \| `day` \| `end` | 효과 화면의 "다음"이 어디로 갈지 |
 | `ending` | null \| `{win, why}` | `phase==="end"`일 때만 값 |
 
@@ -140,3 +141,14 @@ OPTION { label, flavor, effects: {<resourceKey>: number}, conseq: {tone, text} }
 4. `conseq.tone`은 `good|bad|note` 중 하나.
 5. 각 슬롯의 후보 카드는 1장 이상이고, 하루 길이만큼 **중복 없이** 뽑을 수 있어야 한다(일차별로 `minDay`를 반영해 검사).
 6. `minDay`는 1 이상 정수. 카드의 `minDay`가 올라가도 어느 일차에서도 슬롯 후보가 비지 않아야 한다(규칙 5가 함께 검사).
+
+
+### 선택 결과 표시 (Loop 4 승격)
+
+- `effect.beforeResources` = T1에서 복사한 선택 직전 `{<resourceKey>: number}`. 표시 전용이며 게임 판정에는 쓰지 않는다. 기존 효과 페이로드 안에 두어 `render(state)`만으로 표시가 결정된다.
+- `phase === "effect"`일 때만 최종 `resources - effect.beforeResources`로 자원별 실제 변화의 유무·방향을 표시한다. 상한·하한, 휴식/조기 마감, 새날 시간 충전을 모두 반영한다. 순변화 0인 자원은 강조하지 않는다.
+- 상단 숫자/라벨은 증가 초록·감소 빨강으로 250ms 피드백. 게이지 폭 전환은 기존 250ms 유지, 감소한 게이지/시간 칸만 250ms 테두리 강조를 한 번 한다. 다음 카드·종료·재시작에서는 강조 속성을 해제한다.
+- 효과 칩의 수치·부호·색은 기존 선택 비용/하루 마감 효과 그대로다. 실제 값이 변한 자원의 칩에만 200ms 테두리 강조를 한 번 한다. 상단은 최종 순변화, 칩은 개별 효과이므로 하루 마감 때 방향이 다를 수 있다.
+- 카드 → 효과 패널 진입은 200ms CSS 전환. 내용과 수치는 동기적으로 즉시 표시하고, 애니메이션을 기다리는 타이머·입력 잠금·자동 진행은 없다.
+- `prefers-reduced-motion: reduce`에서는 모든 애니메이션·전환의 시간과 지연이 0ms. 부호·색·수치는 그대로 남는다.
+- `#game`은 `100dvh` body 안의 세로 flex를 채운다. 360px 이하에서는 선택 문구와 비용 칩을 두 줄로 배치해 작은 세로 화면에서 잘림을 막는다.

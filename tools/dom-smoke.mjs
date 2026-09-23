@@ -30,6 +30,47 @@ check("시작 화면은 카드", visible("cardView") && !visible("effectView") &
 check("자원 게이지 렌더", document.querySelectorAll("#topbar .stat").length === 3);
 check("카드·선택지 렌더", document.getElementById("cardTitle").textContent.length > 0 && document.querySelectorAll("#options .opt").length >= 2);
 
+/* Loop 4: authored 비용이 아니라 최종 게이지의 실제 변화만 강조한다. */
+const fixtures = [
+  { name: "증가·감소", cardId: "dawn", option: 0, expected: ["neg", "pos", "neg"] },
+  { name: "시간 순비용 0", cardId: "lunch", option: 1, expected: ["neg", "neg", null] },
+  { name: "상한 회복 0", cardId: "dawn", option: 0, resources: { mood: 100 }, expected: ["neg", null, "neg"] },
+  { name: "휴식 상쇄·시간 충전", cardId: "dawn", option: 0, slot: 4, expected: [null, "pos", "pos"] },
+  { name: "시간 충전 전후 동일", cardId: "dawn", option: 0, slot: 4, resources: { time: 12 }, expected: [null, "pos", null] },
+  { name: "즉시 죽음", cardId: "dawn", option: 0, resources: { health: 1 }, expected: ["neg", "pos", "neg"] },
+  { name: "조기 마감 죽음", cardId: "dawn", option: 0, resources: { health: 8, time: 1 }, expected: ["neg", "neg", "neg"] },
+];
+for (const fixture of fixtures) {
+  dom.window.eval(`
+    state = { ...initialState(), cardId: ${JSON.stringify(fixture.cardId)},
+      slot: ${fixture.slot || 0},
+      resources: { ...initialState().resources, ...${JSON.stringify(fixture.resources || {})} } };
+    render(state);
+  `);
+  const before = dom.window.eval("JSON.stringify(state)");
+  document.querySelectorAll("#options .opt")[fixture.option].click();
+  check(fixture.name + " 선택 즉시 효과", visible("effectView") && !visible("cardView"));
+  const rows = [...document.querySelectorAll("#topbar .stat")];
+  rows.forEach((row, i) => {
+    check(fixture.name + " 게이지 " + row.dataset.res,
+      (row.dataset.change || null) === fixture.expected[i]);
+    document.querySelectorAll(`#effectPanel .cost[data-res="${row.dataset.res}"]`).forEach(chip => {
+      check(fixture.name + " 칩 변화 유무", chip.classList.contains("feedback") === Boolean(fixture.expected[i]));
+    });
+  });
+  check(fixture.name + " 선택 전 사본 보존", dom.window.eval("JSON.stringify(state.effect.beforeResources)") === JSON.stringify(JSON.parse(before).resources));
+  const effectState = dom.window.eval("JSON.stringify(state)");
+  dom.window.eval("render(state)");
+  check("렌더는 state 불변", dom.window.eval("JSON.stringify(state)") === effectState);
+  document.getElementById("effectPanel").click();
+  document.getElementById("topbar").click();
+  dom.window.eval("onChoose(0)");
+  check("효과 화면 배경·중복 선택은 무기능", dom.window.eval("JSON.stringify(state)") === effectState);
+  document.getElementById("fxNext").click();
+  check("다음 화면에서 강조 해제", !document.querySelector("#topbar [data-change]"));
+}
+dom.window.eval("state = newGame(); render(state)");
+
 const stats = { wins: 0, losses: 0, maxDay: 0 };
 for (let game = 0; game < 200; game++) {
   let guard = 0;
