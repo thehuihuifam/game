@@ -40,6 +40,8 @@
     width: 100%;
   }
 
+  #game { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+
   /* 자원 색 매핑 — RESOURCES에 자원을 늘리면 여기 한 줄씩 추가 */
   [data-res="health"] { --res: var(--health); }
   [data-res="mood"]   { --res: var(--mood); }
@@ -104,6 +106,13 @@
   .opt .label { flex: 1; }
   .opt .costs { display: flex; gap: 6px; flex: 0 0 auto; align-items: center; }
 
+  /* 좁은 세로 화면에서는 긴 선택 문구와 비용이 서로 밀어내지 않게 두 줄로. */
+  @media (max-width: 360px) {
+    .opt { padding: 10px 12px; }
+    .opt .line2 { flex-direction: column; align-items: stretch; gap: 6px; }
+    .opt .costs { flex-wrap: wrap; }
+  }
+
   /* ── 자원 칩 (선택지 미리보기 + 효과 화면 공용) ──── */
   .cost { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 800; padding: 3px 7px; border-radius: 7px; background: #0c0f16; }
   .cost svg { width: 11px; height: 11px; color: var(--res); }
@@ -135,6 +144,39 @@
     margin-top: 14px;
   }
   .btn:active { filter: brightness(.9); }
+
+  /* 효과 진입만 짧게 강조한다. 타이머·입력 잠금·자동 진행은 없다. */
+  #effectView:not(.hidden) #effectPanel { animation: effect-enter 200ms ease-out; }
+  .stat[data-change="pos"] { --feedback: var(--ok); }
+  .stat[data-change="neg"] { --feedback: var(--bad); }
+  .stat[data-change] .num,
+  .stat[data-change] .rlbl { animation: value-flash 250ms ease-out; }
+  .stat[data-change="neg"] .barwrap,
+  .stat[data-change="neg"] .pips { animation: loss-pulse 250ms ease-out; }
+  #effectPanel .cost.feedback { animation: chip-pulse 200ms ease-out; }
+  @keyframes effect-enter {
+    from { transform: translateY(6px); opacity: .8; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes value-flash {
+    from { color: var(--feedback); }
+  }
+  @keyframes loss-pulse {
+    from { box-shadow: 0 0 0 2px var(--bad); }
+    to { box-shadow: 0 0 0 0 transparent; }
+  }
+  @keyframes chip-pulse {
+    from { box-shadow: 0 0 0 2px currentColor; }
+    to { box-shadow: 0 0 0 0 transparent; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0ms !important;
+      animation-delay: 0ms !important;
+      transition-duration: 0ms !important;
+      transition-delay: 0ms !important;
+    }
+  }
 
   /* ── 종료 화면 ──────────────────────────────────── */
   #endView { justify-content: center; align-items: center; text-align: center; gap: 18px; }
@@ -675,6 +717,8 @@ function choose(prev, index) {
       tag: fill(TEXTS.choiceTag, { tag: card.tag }),
       title: option.label,
       deltas: toDeltas(gained),
+      // 표시 전용 스냅샷: 상한·하한, 하루 마감·시간 충전까지 포함한 실제 변화 비교.
+      beforeResources: { ...prev.resources },
       flavor: option.flavor,
       conseq: option.conseq || null,
       dayEnd: null,
@@ -721,7 +765,7 @@ function next(prev) {
    VIEW — render(state) 한 방향. state를 바꾸지 않는다.
    ═══════════════════════════════════════════════════════════════ */
 
-const UI = { bar: {}, num: {}, pips: {} };
+const UI = { row: {}, bar: {}, num: {}, pips: {} };
 
 function el(id) { return document.getElementById(id); }
 
@@ -729,10 +773,10 @@ function shape(key) {
   return '<svg viewBox="0 0 12 12" aria-hidden="true">' + SHAPES[RES[key].shape] + "</svg>";
 }
 
-function chip(delta) {
+function chip(delta, feedback = false) {
   const r = RES[delta.key];
   const sign = delta.amount < 0 ? "" : "+";
-  return '<span class="cost ' + (delta.amount < 0 ? "neg" : "pos") + '" data-res="' + r.key + '">' +
+  return '<span class="cost ' + (feedback ? "feedback " : "") + (delta.amount < 0 ? "neg" : "pos") + '" data-res="' + r.key + '">' +
          shape(r.key) + "<span>" + r.ko + " " + sign + delta.amount + "</span></span>";
 }
 
@@ -747,6 +791,7 @@ function buildTopbar() {
 
   RESOURCES.forEach(r => {
     const row = document.querySelector('.stat[data-res="' + r.key + '"]');
+    UI.row[r.key] = row;
     if (r.ui === "bar") {
       UI.bar[r.key] = row.querySelector(".bar");
       UI.num[r.key] = row.querySelector(".num");
@@ -756,10 +801,18 @@ function buildTopbar() {
   });
 }
 
+/* 저장된 state만으로 피드백 결정. DOM의 이전 값이나 별도 게임 상태를 쓰지 않는다. */
+function resourceChange(s, key) {
+  return s.phase === "effect" ? s.resources[key] - s.effect.beforeResources[key] : 0;
+}
+
 function renderTopbar(s) {
   el("dayNum").textContent = s.day;
   RESOURCES.forEach(r => {
     const v = s.resources[r.key];
+    const change = resourceChange(s, r.key);
+    if (change) UI.row[r.key].dataset.change = change > 0 ? "pos" : "neg";
+    else delete UI.row[r.key].dataset.change;
     if (r.ui === "bar") {
       UI.bar[r.key].style.width = ((v - r.min) / (r.max - r.min)) * 100 + "%";
       UI.num[r.key].textContent = v;
@@ -782,16 +835,17 @@ function renderCard(s) {
     btn.type = "button";
     btn.className = "opt";
     btn.innerHTML = '<div class="line2"><span class="label">' + option.label + '</span><span class="costs">' +
-                    previewDeltas(option).map(chip).join("") + "</span></div>";
+                    previewDeltas(option).map(d => chip(d)).join("") + "</span></div>";
     btn.addEventListener("click", () => onChoose(i));
     box.appendChild(btn);
   });
 }
 
-function renderEffect(fx) {
+function renderEffect(s) {
+  const fx = s.effect;
   el("fxTag").textContent = fx.tag;
   el("fxTitle").textContent = fx.title;
-  el("fxDelta").innerHTML = fx.deltas.map(chip).join("");
+  el("fxDelta").innerHTML = fx.deltas.map(d => chip(d, resourceChange(s, d.key) !== 0)).join("");
   el("fxFlavor").textContent = fx.flavor;
 
   const conseq = el("fxConseq");
@@ -801,7 +855,7 @@ function renderEffect(fx) {
   const dayEnd = el("fxDayEnd");
   dayEnd.className = fx.dayEnd ? "conseq note dayend" : "conseq note dayend hidden";
   dayEnd.innerHTML = fx.dayEnd
-    ? "<span>" + fx.dayEnd.text + '</span><span class="delta">' + fx.dayEnd.deltas.map(chip).join("") + "</span>"
+    ? "<span>" + fx.dayEnd.text + '</span><span class="delta">' + fx.dayEnd.deltas.map(d => chip(d, resourceChange(s, d.key) !== 0)).join("") + "</span>"
     : "";
 
   el("fxNext").textContent = fx.nextLabel;
@@ -821,7 +875,7 @@ function render(s) {
   renderTopbar(s);
   Object.keys(VIEW_ID).forEach(phase => el(VIEW_ID[phase]).classList.toggle("hidden", phase !== s.phase));
   if (s.phase === "card")   renderCard(s);
-  if (s.phase === "effect") renderEffect(s.effect);
+  if (s.phase === "effect") renderEffect(s);
   if (s.phase === "end")    renderEnd(s.ending);
 }
 
