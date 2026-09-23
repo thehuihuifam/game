@@ -4,7 +4,7 @@
 
 | Loop | PR | 상태 | 결과 (1~2줄 압축) |
 |------|----|------|------------------|
-| 1 | — | ✅ 완료 | 세션 부트스트랩. AGENTS.md·PROGRESS.md 생성 + `index.html`에 세로 고정·도형만·터치 카드 선택·효과 표시가 도는 최소 플레이 가능 프로토타입. |
+| 1 | [#1](https://github.com/thehuihuifam/game/pull/1) | ✅ 완료 | 세션 부트스트랩. AGENTS.md·PROGRESS.md 생성 + `index.html`에 세로 고정·도형만·터치 카드 선택·효과 표시가 도는 최소 플레이 가능 프로토타입. |
 
 ## 다음 작업
 
