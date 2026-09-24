@@ -30,7 +30,8 @@ check("시작 화면은 카드", visible("cardView") && !visible("effectView") &
 check("자원 게이지 렌더", document.querySelectorAll("#topbar .stat").length === 3);
 check("카드·선택지 렌더", document.getElementById("cardTitle").textContent.length > 0 && document.querySelectorAll("#options .opt").length >= 2);
 
-/* Loop 4: authored 비용이 아니라 최종 게이지의 실제 변화만 강조한다. */
+/* Loop 4: authored 비용이 아니라 최종 게이지의 실제 변화만 강조한다.
+   Loop 6: status(시작 상태) → mark(선택지 미리보기 줄) → expectStatus(선택 뒤 상태)·chip(효과 칩)·strip(상태 띠) */
 const fixtures = [
   { name: "증가·감소", cardId: "dawn", option: 0, expected: ["neg", "pos", "neg"] },
   { name: "시간 순비용 0", cardId: "lunch", option: 1, expected: ["neg", "neg", null] },
@@ -39,17 +40,40 @@ const fixtures = [
   { name: "시간 충전 전후 동일", cardId: "dawn", option: 0, slot: 4, resources: { time: 12 }, expected: [null, "pos", null] },
   { name: "즉시 죽음", cardId: "dawn", option: 0, resources: { health: 1 }, expected: ["neg", "pos", "neg"], ending: true },
   { name: "조기 마감 죽음", cardId: "dawn", option: 0, resources: { health: 8, time: 1 }, expected: ["neg", "neg", "neg"], ending: true },
+  { name: "상태 획득", cardId: "call", option: 1, expected: [null, "neg", null], mark: "set", expectStatus: "unanswered", chip: "neg", expectNext: "reply" },
+  { name: "상태 없으면 해제 무효", cardId: "call", option: 0, expected: ["neg", "neg", "neg"], mark: null, expectStatus: null, chip: null },
+  { name: "상태 없으면 후속 카드 안 나옴", cardId: "lunch", option: 0, expected: ["pos", "neg", "neg"], expectStatus: null, chip: null },
+  { name: "상태 해제", cardId: "reply", option: 0, status: "unanswered", expected: ["neg", "neg", "neg"], mark: "clear", expectStatus: null, chip: "pos" },
+  { name: "상태 유지(또 미룸)", cardId: "reply", option: 2, status: "unanswered", expected: [null, "neg", null], mark: null, expectStatus: "unanswered", chip: null },
+  { name: "켜진 상태 다시 켬은 변화 없음", cardId: "parent", option: 1, status: "unanswered", expected: ["neg", "neg", "neg"], mark: null, expectStatus: "unanswered", chip: null },
+  { name: "하루 넘겨도 상태 유지", cardId: "night", option: 0, slot: 4, status: "unanswered", expected: ["pos", "pos", "pos"], mark: null, expectStatus: "unanswered", chip: null },
+  { name: "상태 든 채 죽음", cardId: "reply", option: 2, status: "unanswered", resources: { mood: 5 }, expected: [null, "neg", null], expectStatus: "unanswered", chip: null, ending: true },
 ];
 for (const fixture of fixtures) {
   dom.window.eval(`
     state = { ...initialState(), cardId: ${JSON.stringify(fixture.cardId)},
       slot: ${fixture.slot || 0},
+      status: ${JSON.stringify(fixture.status || null)},
       resources: { ...initialState().resources, ...${JSON.stringify(fixture.resources || {})} } };
     render(state);
   `);
+  check(fixture.name + " 시작 상태 띠", visible("statusbar") === Boolean(fixture.status));
+  if ("mark" in fixture) {
+    const mark = document.querySelectorAll("#options .opt")[fixture.option].querySelector(".mark");
+    check(fixture.name + " 선택지 상태 줄", (mark ? (mark.classList.contains("set") ? "set" : "clear") : null) === fixture.mark && (!mark || mark.textContent.length > 0));
+  }
   const before = dom.window.eval("JSON.stringify(state)");
   document.querySelectorAll("#options .opt")[fixture.option].click();
   check(fixture.name + " 선택 즉시 효과", visible("effectView") && !visible("cardView"));
+  if ("expectStatus" in fixture) {
+    check(fixture.name + " 상태 전이", dom.window.eval("state.status") === fixture.expectStatus);
+    check(fixture.name + " 상태 띠 표시", visible("statusbar") === Boolean(fixture.expectStatus) &&
+      (!fixture.expectStatus || document.getElementById("statusName").textContent === "미룬 연락"));
+    const chip = document.querySelector("#fxDelta .cost[data-status]");
+    check(fixture.name + " 상태 칩", (chip ? (chip.classList.contains("neg") ? "neg" : "pos") : null) === fixture.chip);
+    check(fixture.name + " 효과 페이로드 status", JSON.stringify(dom.window.eval("state.effect.status")) ===
+      JSON.stringify(fixture.chip ? { id: "unanswered", on: fixture.chip === "neg" } : null));
+  }
   const rows = [...document.querySelectorAll("#topbar .stat")];
   rows.forEach((row, i) => {
     check(fixture.name + " 게이지 " + row.dataset.res,
@@ -71,23 +95,39 @@ for (const fixture of fixtures) {
   check("다음 화면에서 강조 해제", !document.querySelector("#topbar [data-change]"));
   if (fixture.ending) {
     check(fixture.name + " 마지막 효과 뒤 종료", visible("endView"));
+    check(fixture.name + " 종료 화면에서 상태 띠 숨김", !visible("statusbar"));
     const summary = dom.window.eval("state.ending.summary");
     check(fixture.name + " 요약 일차·횟수 정확", summary.days === 1 && summary.choices === 1);
     check(fixture.name + " 요약 최종 자원 정확", JSON.stringify(summary.resources) === JSON.stringify(dom.window.eval("state.resources")));
     check(fixture.name + " 종료 화면 요약 렌더", document.getElementById("endDays").textContent.includes("1일") && document.getElementById("endChoices").textContent.includes("1회") && document.querySelectorAll("#endResources .cost").length === 3);
     document.getElementById("endBtn").click();
     check(fixture.name + " 다시 시작 요약 초기화", visible("cardView") && dom.window.eval("state.choices") === 0 && !document.querySelector("#topbar [data-change]"));
+    check(fixture.name + " 다시 시작 상태 초기화", dom.window.eval("state.status") === null && !visible("statusbar"));
+  } else if ("expectStatus" in fixture) {
+    // 상태가 켜진 채 다음 슬롯으로: 후속 카드가 후보에 들면 반드시 그 카드(결정적 드로)
+    const due = JSON.parse(dom.window.eval("JSON.stringify(state.status ? poolAt(state.slot, state.day, state.usedToday.filter(id => id !== state.cardId), state.status).filter(id => CARD[id].needs) : [])"));
+    const drawn = dom.window.eval("state.cardId");
+    const gateOk = dom.window.eval("!CARD[state.cardId].needs || CARD[state.cardId].needs === state.status");   // 꺼진 상태의 후속 카드는 절대 안 나온다
+    check(fixture.name + " 후속 카드 강제 드로", gateOk && (due.length === 0 || due.includes(drawn)), JSON.stringify(due) + " → " + drawn);
+    if ("expectNext" in fixture) check(fixture.name + " 다음 카드", drawn === fixture.expectNext, drawn);
   }
 }
 dom.window.eval("state = newGame(); render(state)");
 
-const stats = { wins: 0, losses: 0, maxDay: 0 };
+const stats = { wins: 0, losses: 0, maxDay: 0, statusOn: 0, followUps: 0 };
 for (let game = 0; game < 200; game++) {
   let guard = 0;
+  check("새 판은 상태 없음", dom.window.eval("state.status") === null && !visible("statusbar"));
   while (!visible("endView") && guard++ < 400) {
     if (visible("cardView")) {
       const opts = [...document.querySelectorAll("#options .opt")];
       check("선택지 2~3개", opts.length >= 2 && opts.length <= 3, String(opts.length));
+      // 상태 띠는 state.status 그대로, 후속 카드는 켜진 상태에서만, 켜져 있고 후보에 들면 반드시 그 카드
+      check("상태 띠 = state.status", visible("statusbar") === Boolean(dom.window.eval("state.status")));
+      check("후속 카드는 켜진 상태에서만", dom.window.eval("!CARD[state.cardId].needs || CARD[state.cardId].needs === state.status"));
+      check("켜진 상태의 후속 카드 강제 드로", dom.window.eval("(() => { if (!state.status) return true; const due = poolAt(state.slot, state.day, state.usedToday.filter(id => id !== state.cardId), state.status).filter(id => CARD[id].needs); return !due.length || due.includes(state.cardId); })()"));
+      if (dom.window.eval("state.status")) stats.statusOn++;
+      if (dom.window.eval("Boolean(CARD[state.cardId].needs)")) stats.followUps++;
       opts[Math.floor(Math.random() * opts.length)].click();
     } else if (visible("effectView")) {
       document.getElementById("fxNext").click();
@@ -110,6 +150,7 @@ for (let game = 0; game < 200; game++) {
 
 check("JS 예외 없음", errors.length === 0, errors.slice(0, 2).join(" | "));
 check("완주·죽음 모두 관측", stats.wins > 0 && stats.losses > 0, JSON.stringify(stats));
+check("상태 켜짐·후속 카드 모두 관측", stats.statusOn > 0 && stats.followUps > 0, JSON.stringify(stats));
 check("일차 카운터가 목표 일수까지 감", stats.maxDay === 4, "maxDay=" + stats.maxDay);
 
 console.log("200판 클릭 시뮬레이션:", JSON.stringify(stats));
