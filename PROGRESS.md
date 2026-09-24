@@ -10,7 +10,7 @@
 | 3 | [#3](https://github.com/thehuihuifam/game/pull/3) | ✅ 완료 | 카드 7→20장(신규 13장) + `CARD.minDay`(2·3일차 게이트) 승격으로 3일 압박 곡선을 DATA만으로 구현. 전 카드 수치 재조정 → 무작위 완주 38.4%(죽음 3경로 모두 관측)·최선 플레이 79~100%·최악 0.2%, 하루 중복 0건. 검사 하네스 `tools/`(check·sim·dom-smoke) 추가. |
 | 4 | [#4](https://github.com/thehuihuifam/game/pull/4) | ✅ 완료 | 선택 결과 CSS 피드백(200~250ms)·실제 변화 자원만 강조·reduce 0ms·작은 세로 화면 보완. check 23건·DOM 200판·시드 고정 2,000판/54,042상태 Loop 3 패리티 및 Chromium 전 카드·3개 뷰포트 검사 통과. |
 | 5 | [#5](https://github.com/thehuihuifam/game/pull/5) | ✅ 완료 | 종료 화면에 생존/소진 사유, 진행 일차·선택 횟수·최종 자원 요약을 표시하고 승리 일차를 목표 일수로 보정. 마지막 효과→요약→재시작 흐름과 새 판 요약 초기화를 추가. check 23건·1,000판 sim 및 요약 불변식 1,000판 통과. DOM smoke는 jsdom 미설치, Chromium 모션 검사는 Playwright 미설치로 실행 불가. |
-| 6 | PR_LINK_LOOP6 | ✅ 완료 | 단일 상태이상 「미룬 연락」(`state.status`) 승격: 연락을 미루는 선택(`parent`#1·`call`#1·`complain`#2)이 켜고, 켜진 동안 후속 카드 `reply`가 다음 학교 슬롯에서 **결정적으로** 뽑히며, 답하는 선택이 끈다. 상태 띠·선택지 미리보기 줄·효과 칩 추가, 무결성 규칙 7~8. check 30건·sim 2,000판×4(결정성 위반 0)·DOM 200판·Chromium 3개 뷰포트(상태 꺼짐·켜짐) 통과. 무작위 완주 38.7%(변화 없음), 근시안 greedy는 80→69%로 빚을 체감. |
+| 6 | [#6](https://github.com/thehuihuifam/game/pull/6) | ✅ 완료 | 단일 상태이상 「미룬 연락」(`state.status`) 승격: 연락을 미루는 선택(`parent`#1·`call`#1·`complain`#2)이 켜고, 켜진 동안 후속 카드 `reply`가 다음 학교 슬롯에서 **결정적으로** 뽑히며, 답하는 선택이 끈다. 상태 띠·선택지 미리보기 줄·효과 칩 추가, 무결성 규칙 7~8. check 30건·sim 2,000판×4(결정성 위반 0)·DOM 200판·Chromium 3개 뷰포트(상태 꺼짐·켜짐) 통과. 무작위 완주 38.7%(변화 없음), 근시안 greedy는 80→69%로 빚을 체감. |
 
 ## 다음 작업
 
