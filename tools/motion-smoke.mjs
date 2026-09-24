@@ -53,6 +53,7 @@ try {
   }
 
   // 가장 작은 화면에서도 전 카드·전 선택 효과(하루 마감 포함)가 잘리지 않는다.
+  // 상태(Loop 6)가 꺼진/켜진 두 경우 모두: 상태 띠·선택지 상태 줄·상태 칩이 들어간 화면까지 본다.
   await page.emulateMedia({ reducedMotion: "reduce" });
   for (const [width, height] of [[320, 568], [360, 640], [390, 844]]) {
     await page.setViewportSize({ width, height });
@@ -62,22 +63,25 @@ try {
         const r = node.getBoundingClientRect();
         if (r.left < -1 || r.top < -1 || r.right > innerWidth + 1 || r.bottom > innerHeight + 1 || node.scrollWidth > node.clientWidth + 1) issues.push(label);
       };
-      for (const card of CARDS) {
-        const start = { ...initialState(), cardId: card.id, day: 3, slot: 4 };
+      for (const status of [null, ...Object.keys(STATUSES)]) for (const card of CARDS) {
+        const start = { ...initialState(), cardId: card.id, day: 3, slot: 4, status };
         render(start);
-        document.querySelectorAll("#cardView .card, #options .opt, #options .label, #options .cost").forEach(n => inside(n, card.id + ":card"));
-        if (document.querySelector(".card").getBoundingClientRect().bottom > el("options").getBoundingClientRect().top) issues.push(card.id + ":overlap");
+        if (el("statusbar").classList.contains("hidden") !== !status) issues.push(card.id + ":statusbar");
+        document.querySelectorAll("#statusbar, #statusbar .desc, #cardView .card, #options .opt, #options .label, #options .cost, #options .mark").forEach(n => inside(n, card.id + ":card:" + status));
+        if (document.querySelector(".card").getBoundingClientRect().bottom > el("options").getBoundingClientRect().top) issues.push(card.id + ":overlap:" + status);
         card.options.forEach((_, i) => {
           render(choose(start, i));
-          inside(el("effectPanel"), card.id + ":effect");
-          inside(el("fxNext"), card.id + ":next");
-          if (el("effectPanel").getBoundingClientRect().bottom > el("fxNext").getBoundingClientRect().top) issues.push(card.id + ":effect-overlap");
+          inside(el("effectPanel"), card.id + ":effect:" + status);
+          inside(el("fxNext"), card.id + ":next:" + status);
+          document.querySelectorAll("#fxDelta .cost").forEach(n => inside(n, card.id + ":chip:" + status));
+          if (el("effectPanel").getBoundingClientRect().bottom > el("fxNext").getBoundingClientRect().top) issues.push(card.id + ":effect-overlap:" + status);
         });
       }
-      state = { ...initialState(), phase: "effect", choices: 15, resources: { health: 12, mood: 23, time: 0 }, effect: { nextLabel: "" } };
+      state = { ...initialState(), phase: "effect", choices: 15, status: Object.keys(STATUSES)[0], resources: { health: 12, mood: 23, time: 0 }, effect: { nextLabel: "" } };
       finish(state, false, ENDINGS.death.health.nightfall);
       state.phase = "end";
       render(state);
+      if (!el("statusbar").classList.contains("hidden")) issues.push("end-statusbar-visible");
       document.querySelectorAll("#endView .big, #endView .why, #endView .summary, #endView .summary-line, #endResources .cost, #endBtn").forEach(n => inside(n, "end-summary"));
       if (el("endSummary").getBoundingClientRect().bottom > el("endBtn").getBoundingClientRect().top) issues.push("end-summary-overlap");
       if (document.documentElement.scrollHeight > innerHeight || document.documentElement.scrollWidth > innerWidth) issues.push("document-scroll");
@@ -89,7 +93,7 @@ try {
   assert.equal(await page.locator("#rotate").isVisible(), true);
   assert.equal(await page.locator("#game").isVisible(), false);
   assert.deepEqual(errors, []);
-  console.log("브라우저 통과: 반복 선택·200/250ms·reduce 0ms·정지·3개 세로 뷰포트 전 카드·가로 차단");
+  console.log("브라우저 통과: 반복 선택·200/250ms·reduce 0ms·정지·3개 세로 뷰포트 전 카드(상태 꺼짐·켜짐)·가로 차단");
 } finally {
   await browser.close();
 }

@@ -1,10 +1,10 @@
-/* 데이터 무결성 검사 — AGENTS.md "데이터 무결성 규칙 1~5" + 카드 풀 최소 조건.
+/* 데이터 무결성 검사 — AGENTS.md "데이터 무결성 규칙 1~8" + 카드 풀 최소 조건.
  * 쓰는 법: node tools/check.mjs   (실패가 있으면 exit 1)
  */
 import { loadGame } from "./load.mjs";
 
 const g = loadGame();
-const { RESOURCES, CARDS, PACKS, DAY_CYCLE, CARD } = g;
+const { RESOURCES, CARDS, STATUSES, PACKS, DAY_CYCLE, CARD, SHAPES } = g;
 
 const fails = [];
 const ok = [];
@@ -43,8 +43,9 @@ const tones = ["good", "bad", "note"];
 t("규칙4 tone 유효", !CARDS.some(c => c.options.some(o => !o.conseq || !tones.includes(o.conseq.tone))),
   CARDS.filter(c => c.options.some(o => !o.conseq || !tones.includes(o.conseq.tone))).map(c => c.id).join(","));
 
-/* 규칙 5: 슬롯마다 후보 ≥1, 그리고 하루를 중복 없이 뽑을 수 있다(카드의 minDay 게이트 반영) */
-const inDay = (cid, day) => (CARD[cid].minDay || 1) <= day;
+/* 규칙 5: 슬롯마다 후보 ≥1, 그리고 하루를 중복 없이 뽑을 수 있다(카드의 minDay 게이트 반영).
+   needs가 있는 후속 카드는 조건부라 기본 풀에 세지 않는다(규칙 8) */
+const inDay = (cid, day) => (CARD[cid].minDay || 1) <= day && !CARD[cid].needs;
 const poolAt = (slot, day) => [...new Set(DAY_CYCLE.slots[slot].packs.filter(p => PACKS[p]).flatMap(p => PACKS[p].cards))].filter(id => inDay(id, day));
 for (let day = 1; day <= DAY_CYCLE.goalDays; day++) {
   const pools = DAY_CYCLE.slots.map((_, i) => poolAt(i, day));
@@ -63,6 +64,35 @@ function matchable(pools) {
     return false;
   };
   return pools.every((_, s) => tryK(s, new Set()));
+}
+
+/* 규칙 7: set·clear·needs는 STATUSES의 키. 한 옵션에 set과 clear를 같이 두지 않는다 */
+const statusIds = Object.keys(STATUSES);
+const badStatus = [];
+for (const c of CARDS) {
+  if (c.needs !== undefined && !STATUSES[c.needs]) badStatus.push(`${c.id}.needs=${c.needs}`);
+  c.options.forEach((o, i) => {
+    if (o.set !== undefined && !STATUSES[o.set]) badStatus.push(`${c.id}#${i}.set=${o.set}`);
+    if (o.clear !== undefined && !STATUSES[o.clear]) badStatus.push(`${c.id}#${i}.clear=${o.clear}`);
+    if (o.set !== undefined && o.clear !== undefined) badStatus.push(`${c.id}#${i}: set+clear`);
+  });
+}
+t("규칙7 상태 참조 유효", badStatus.length === 0, badStatus.join(","));
+t("규칙7 상태 필수 칸·도형", statusIds.every(id => STATUSES[id].ko && STATUSES[id].desc && STATUSES[id].setText && STATUSES[id].clearText && SHAPES[STATUSES[id].shape]),
+  statusIds.filter(id => !SHAPES[STATUSES[id].shape]).join(","));
+
+/* 규칙 8: 상태마다 켜는 옵션·끄는 옵션·후속 카드가 각각 1개 이상(죽은 상태 금지),
+   후속 카드는 끄는 옵션을 가진다(빠져나갈 길), 후속 카드는 어느 슬롯에선가 뽑힐 수 있다 */
+const opts = CARDS.flatMap(c => c.options.map((o, i) => ({ id: `${c.id}#${i}`, ...o })));
+const owner = Object.fromEntries(Object.entries(PACKS).flatMap(([pid, p]) => p.cards.map(cid => [cid, pid])));
+for (const id of statusIds) {
+  const setters = opts.filter(o => o.set === id), clearers = opts.filter(o => o.clear === id);
+  const follow = CARDS.filter(c => c.needs === id);
+  t(`규칙8 ${id} 켜는 옵션 ≥1`, setters.length >= 1);
+  t(`규칙8 ${id} 끄는 옵션 ≥1`, clearers.length >= 1);
+  t(`규칙8 ${id} 후속 카드 ≥1`, follow.length >= 1);
+  t(`규칙8 ${id} 후속 카드에 끄는 옵션`, follow.every(c => c.options.some(o => o.clear === id)), follow.filter(c => !c.options.some(o => o.clear === id)).map(c => c.id).join(","));
+  t(`규칙8 ${id} 후속 카드가 슬롯에서 뽑힘`, follow.every(c => slotPacks.has(owner[c.id])), follow.filter(c => !slotPacks.has(owner[c.id])).map(c => c.id).join(","));
 }
 
 /* 카드 풀 최소 조건(카드 풀 확장 Loop의 완료 조건) */

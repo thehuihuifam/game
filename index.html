@@ -18,6 +18,7 @@
     --time: #4f86f7;
     --ok: #6fc276;
     --bad: #e4573d;
+    --status: #b88cf5;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body {
@@ -46,6 +47,7 @@
   [data-res="health"] { --res: var(--health); }
   [data-res="mood"]   { --res: var(--mood); }
   [data-res="time"]   { --res: var(--time); }
+  [data-status]       { --res: var(--status); }
 
   /* ── 상단 자원 헤더 (VIEW가 RESOURCES로 조립) ─────── */
   #topbar {
@@ -77,6 +79,19 @@
   .stat .pip { width: 9px; height: 9px; border-radius: 3px; background: #0c0f16; }
   .stat .pip.on { background: var(--res); }
 
+  /* ── 상태 띠 — 켜진 상태이상 하나(state.status)를 게이지 아래에 보인다 ── */
+  #statusbar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 14px;
+    background: var(--panel2);
+    border-bottom: 1px solid #262c3b;
+    font-size: 12px; line-height: 1.3;
+  }
+  #statusbar .ico { width: 13px; height: 13px; flex: 0 0 auto; color: var(--res); }
+  #statusbar .ico svg { width: 100%; height: 100%; display: block; }
+  #statusbar .name { font-weight: 800; color: var(--res); flex: 0 0 auto; }
+  #statusbar .desc { color: var(--ink-dim); flex: 1; min-width: 0; }
+
   /* ── 화면(뷰) 공통 ──────────────────────────────── */
   #stage { flex: 1; position: relative; min-height: 0; }
   .view { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 16px 14px 18px; }
@@ -105,6 +120,11 @@
   .opt .line2 { display: flex; align-items: center; gap: 10px; }
   .opt .label { flex: 1; }
   .opt .costs { display: flex; gap: 6px; flex: 0 0 auto; align-items: center; }
+  /* 이 선택이 상태를 켜거나 끌 때만 한 줄 더 (RULE의 previewStatus가 정한다) */
+  .opt .mark { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; }
+  .opt .mark svg { width: 11px; height: 11px; flex: 0 0 auto; color: var(--res); }
+  .opt .mark.set   { color: var(--bad); }
+  .opt .mark.clear { color: var(--ok); }
 
   /* 좁은 세로 화면에서는 긴 선택 문구와 비용이 서로 밀어내지 않게 두 줄로. */
   @media (max-width: 360px) {
@@ -206,6 +226,9 @@
     <div class="day"><div class="num" id="dayNum">1</div><div class="lbl">DAY</div></div>
     <div class="stats" id="stats"></div>
   </div>
+  <div id="statusbar" class="hidden">
+    <span class="ico" id="statusIco"></span><span class="name" id="statusName"></span><span class="desc" id="statusDesc"></span>
+  </div>
 
   <div id="stage">
     <section class="view" id="cardView">
@@ -263,10 +286,12 @@ const SHAPES = {
   square: '<rect x="2" y="3" width="8" height="7" rx="2" fill="currentColor"/>',
   circle: '<circle cx="6" cy="6" r="5" fill="currentColor"/>',
   clock:  '<rect x="2" y="4" width="8" height="6" rx="1" fill="currentColor"/><rect x="5" y="3" width="2" height="2" fill="currentColor"/>',
+  mail:   '<rect x="1" y="2.5" width="10" height="7" rx="1" fill="currentColor"/><path d="M1.5 3.5 6 7 10.5 3.5" fill="none" stroke="#10131a" stroke-width="1.2"/>',
 };
 
 /* ③ 카드 — 순수 창작 픽션(소재: MATERIALS.md). effects의 키는 RESOURCES.key
-   minDay = 이 카드가 등장하기 시작하는 일차(없으면 1일차부터). 뒤로 갈수록 무겁다. */
+   minDay = 이 카드가 등장하기 시작하는 일차(없으면 1일차부터). 뒤로 갈수록 무겁다.
+   set/clear = 이 선택이 켜거나 끄는 상태(STATUSES 키). needs = 그 상태가 켜져 있을 때만 나오는 후속 카드 */
 const CARDS = [
   /* ── 1일차부터 — 익숙한 하루 ─────────────────────────── */
   {
@@ -291,8 +316,8 @@ const CARDS = [
     options: [
       { label: "끝까지 들어 드린다",         flavor: "이야기는 길어졌고, 준비 시간은 사라졌다.",
         effects: { health: -2, mood: -5, time: -2 }, conseq: { tone: "bad", text: "공감은 했지만 수업 준비가 밀렸다. 기분이 무겁다." } },
-      { label: "정중히 끊고 수업 준비",       flavor: "다음에 상담을 잡아 드린다. 숨 고르고 교실로.",
-        effects: { health: -2, mood: -1 }, conseq: { tone: "good", text: "수업 준비가 덜 밀렸다. 조금은 미안하지만." } },
+      { label: "정중히 끊고 수업 준비",       flavor: "다음에 상담을 잡아 드린다. 숨 고르고 교실로.", set: "unanswered",
+        effects: { health: -2, mood: -1 }, conseq: { tone: "note", text: "수업 준비는 지켰다. 잡아 드리기로 한 상담이 남았다." } },
       { label: "아이 얘기라 무시 못 한다",    flavor: "마음을 쏟아 들었다. 교무실 복귀는 늦어졌다.",
         effects: { health: -6, time: -3 }, conseq: { tone: "good", text: "학부모가 안심하는 모습에 보람이 든다." } },
     ],
@@ -415,11 +440,11 @@ const CARDS = [
     title: "메시지가 한 줄 와 있다.",
     text: "짧은 문장이다. \"아이에게 무슨 일이 있었는지 알고 싶습니다.\" 급식실로 가는 길에 확인했다.",
     options: [
-      { label: "지금 바로 답장을 쓴다",       flavor: "식판 앞에서 문장을 고쳐 쓴다. 밥은 반쯤 남았다.",
+      { label: "지금 바로 답장을 쓴다",       flavor: "식판 앞에서 문장을 고쳐 쓴다. 밥은 반쯤 남았다.", clear: "unanswered",
         effects: { health: -2, mood: -2, time: -2 }, conseq: { tone: "note", text: "답은 갔고, 점심시간은 사라졌다." } },
-      { label: "수업이 다 끝나고 답한다",     flavor: "알림을 지우고 오후 수업으로 넘어간다. 문장이 머릿속에 남는다.",
+      { label: "수업이 다 끝나고 답한다",     flavor: "알림을 지우고 오후 수업으로 넘어간다. 문장이 머릿속에 남는다.", set: "unanswered",
         effects: { mood: -8, time: +1 }, conseq: { tone: "bad", text: "미뤄 둔 답장이 오후 내내 뒤통수에 붙어 있었다." } },
-      { label: "담임 선생님께 먼저 묻는다",   flavor: "상황을 한 번 확인하고 답을 쓰기로 한다. 복도 왕복이 길었다.",
+      { label: "담임 선생님께 먼저 묻는다",   flavor: "상황을 한 번 확인하고 답을 쓰기로 한다. 복도 왕복이 길었다.", clear: "unanswered",
         effects: { health: -4, mood: +2, time: -2 }, conseq: { tone: "good", text: "두 사람이 아는 것이 달라서, 미리 맞춰 둔 게 컸다." } },
     ],
   },
@@ -435,6 +460,23 @@ const CARDS = [
         effects: { health: -2, mood: -4, time: -1 }, conseq: { tone: "note", text: "일은 돌아갔지만 내 자리에서 벌어진 일이었다." } },
       { label: "미안하다고만 말한다",         flavor: "문이 잠겼다는 사실만 전하고 돌아선다.",
         effects: { mood: -8, time: +1 }, conseq: { tone: "bad", text: "돌아서는 등 뒤가 오래 기억에 남았다." } },
+    ],
+  },
+
+  /* ── 상태 후속 — 「미룬 연락」이 켜져 있을 때만 후보에 들고, 들면 먼저 뽑힌다 ── */
+  {
+    id: "reply",
+    tag: "쉬는 시간",
+    needs: "unanswered",
+    title: "미뤄 둔 연락이 돌아왔다.",
+    text: "\"확인하셨을까요.\" 한 줄이 더 붙어 있다. 복도에서 다음 반이 줄을 서는 소리가 들린다.",
+    options: [
+      { label: "지금 답한다",                 flavor: "복도 끝에 서서 문장을 고른다. 다음 반은 5분을 더 기다렸다.", clear: "unanswered",
+        effects: { health: -2, mood: -2, time: -2 }, conseq: { tone: "note", text: "늦었지만 답은 갔다. 미뤄 둔 만큼 문장이 길어졌다." } },
+      { label: "담임과 맞추고 답한다",         flavor: "교실에 들러 상황을 한 번 맞춘다. 답은 두 사람 이름으로 나갔다.", clear: "unanswered",
+        effects: { health: -5, mood: +2, time: -2 }, conseq: { tone: "good", text: "늦은 대신, 같은 걸 두 번 물을 일은 없게 됐다." } },
+      { label: "또 미룬다",                   flavor: "알림을 끄고 호루라기를 문다. 문장이 두 줄이 됐다.",
+        effects: { mood: -10, time: +1 }, conseq: { tone: "bad", text: "두 줄이 된 문장이 수업 내내 등 뒤에 있었다." } },
     ],
   },
 
@@ -465,7 +507,7 @@ const CARDS = [
         effects: { health: -4, mood: -6, time: -3 }, conseq: { tone: "note", text: "오해는 풀렸다. 대신 오전 수업 두 개가 급해졌다." } },
       { label: "기록을 남기고 절차대로 넘긴다", flavor: "들은 내용을 시간 순서로 적어 두고 담당 선생님께 넘긴다.",
         effects: { health: -2, mood: -4, time: -2 }, conseq: { tone: "note", text: "남긴 기록이 나를 지켜 줄 거라고 스스로에게 말했다." } },
-      { label: "혼자 오래 삭힌다",           flavor: "어디에도 꺼내지 않고 앉아 있었다. 오후 내내 그 문장이 다시 돌아간다.",
+      { label: "혼자 오래 삭힌다",           flavor: "어디에도 꺼내지 않고 앉아 있었다. 오후 내내 그 문장이 다시 돌아간다.", set: "unanswered",
         effects: { mood: -10, time: +1 }, conseq: { tone: "bad", text: "아무 일도 없던 것처럼 수업을 했는데, 속은 계속 무거웠다." } },
     ],
   },
@@ -563,15 +605,27 @@ const CARDS = [
   },
 ];
 
-/* ④ 팩 — 카드 id를 참조한다(단방향). 팩 = 장소, 일차는 카드의 minDay가 정한다.
+/* ④ 상태 — 앞의 선택이 뒤의 카드에 남기는 표식. 한 번에 하나만 켜진다(state.status).
+   옵션의 set이 켜고 clear가 끈다. needs가 이 키인 카드는 켜져 있는 동안 먼저 뽑힌다 */
+const STATUSES = {
+  unanswered: {
+    ko: "미룬 연락",
+    shape: "mail",
+    desc: "답하지 않은 연락이 학교로 돌아온다.",   // 상태 띠
+    setText: "미룬 연락이 남는다",               // 선택지 미리보기(켤 때)
+    clearText: "미룬 연락을 끝낸다",             // 선택지 미리보기(끌 때)
+  },
+};
+
+/* ⑤ 팩 — 카드 id를 참조한다(단방향). 팩 = 장소, 일차는 카드의 minDay가 정한다.
    카드는 정확히 한 팩에만 속한다(무결성 규칙 1). 어느 슬롯에서 나올 수 있는지는 slots가 정한다 */
 const PACKS = {
   morning: { ko: "아침", cards: ["dawn", "bag2", "safe", "parent", "rain", "mirror"] },
-  school:  { ko: "학교", cards: ["lunch", "injury", "meeting", "call", "errand", "complain", "crowd", "blank"] },
+  school:  { ko: "학교", cards: ["lunch", "injury", "meeting", "call", "errand", "reply", "complain", "crowd", "blank"] },
   home:    { ko: "집",   cards: ["fever", "night", "bath", "bigday", "pickup", "ours"] },
 };
 
-/* ⑤ 하루 사이클 — 하루 길이 = slots.length */
+/* ⑥ 하루 사이클 — 하루 길이 = slots.length */
 const DAY_CYCLE = {
   goalDays: 3,
   baseTimeCost: 1,   // 선택 1회의 기본 시간 소모
@@ -588,16 +642,18 @@ const DAY_CYCLE = {
   nightfall: { effects: { health: -5, mood: -4 }, text: "시간을 다 써버렸다. 남은 일이 내일로 밀린다." },
 };
 
-/* ⑥ 문구 — RULE에 한국어 리터럴을 두지 않는다. {자리}는 RULE이 채운다 */
+/* ⑦ 문구 — RULE에 한국어 리터럴을 두지 않는다. {자리}는 RULE이 채운다 */
 const TEXTS = {
   choiceTag: "{tag} · 선택",
   nextContinue: "계속",
   nextDay: "{day}일차로",
   dayStart: " — {day}일차 시작",
   dayDone: " — 완주.",
+  statusOn: "{ko}",          // 효과 칩: 상태가 켜짐
+  statusOff: "{ko} 해제",    // 효과 칩: 상태가 꺼짐
 };
 
-/* ⑦ 종료 문구 */
+/* ⑧ 종료 문구 */
 const ENDINGS = {
   winTitle: "생존",
   loseTitle: "번아웃",
@@ -656,6 +712,23 @@ function deadKey(resources) {
   return hit ? hit.key : null;
 }
 
+/* 상태 전이: set이 켜고, 켜진 것과 같은 clear가 끈다. 그 외에는 그대로(슬롯·하루를 넘겨도 유지) */
+function nextStatus(status, option) {
+  if (option.set) return option.set;
+  if (option.clear && option.clear === status) return null;
+  return status;
+}
+
+/* 실제로 바뀐 경우만 {id, on}. 표시 전용 */
+function statusChange(before, after) {
+  return after === before ? null : { id: after || before, on: Boolean(after) };
+}
+
+/* 선택지에 미리 그려 줄 상태 변화 (VIEW가 정책 없이 쓰기 위한 RULE의 출력) */
+function previewStatus(s, option) {
+  return statusChange(s.status, nextStatus(s.status, option));
+}
+
 /* T0 — 새 판 */
 function initialState() {
   return {
@@ -666,6 +739,7 @@ function initialState() {
     cardId: null,
     usedToday: [],
     choices: 0,
+    status: null,
     effect: null,
     pending: null,
     ending: null,
@@ -673,18 +747,21 @@ function initialState() {
 }
 
 /* 슬롯 -> 팩 -> 카드. 하루 안 중복은 usedToday로 막는다.
-   minDay가 있는 카드는 그 일차부터 후보에 든다(뒤로 갈수록 무거운 카드가 섞인다) */
-function poolAt(slotIndex, day, exclude) {
+   minDay가 있는 카드는 그 일차부터 후보에 든다(뒤로 갈수록 무거운 카드가 섞인다).
+   needs가 있는 카드는 그 상태가 켜져 있을 때만 후보에 든다(앞의 선택이 뒤의 카드를 바꾼다) */
+function poolAt(slotIndex, day, exclude, status) {
   const packs = DAY_CYCLE.slots[slotIndex].packs;
   const all = packs.flatMap(id => PACKS[id].cards);
-  const inDay = all.filter(id => (CARD[id].minDay || 1) <= day);
+  const inDay = all.filter(id => (CARD[id].minDay || 1) <= day && (!CARD[id].needs || CARD[id].needs === status));
   return inDay.filter(id => !exclude.includes(id));
 }
 
 function drawSlot(prev) {
-  const fresh = poolAt(prev.slot, prev.day, prev.usedToday);
-  const pool = poolAt(prev.slot, prev.day, []);
-  const pickFrom = (DAY_CYCLE.noRepeatInDay && fresh.length) ? fresh : pool;
+  const fresh = poolAt(prev.slot, prev.day, prev.usedToday, prev.status);
+  const pool = poolAt(prev.slot, prev.day, [], prev.status);
+  // 켜진 상태의 후속 카드가 오늘 아직 안 나왔으면 무작위 대신 그 카드(결정적)
+  const due = fresh.filter(id => CARD[id].needs);
+  const pickFrom = due.length ? due : (DAY_CYCLE.noRepeatInDay && fresh.length) ? fresh : pool;
   const cardId = pickFrom[Math.floor(Math.random() * pickFrom.length)];
   return { ...prev, phase: "card", cardId, usedToday: [...prev.usedToday, cardId], effect: null, pending: null };
 }
@@ -728,18 +805,22 @@ function choose(prev, index) {
   const card = CARD[prev.cardId];
   const option = card.options[index];
   const gained = withBaseCost(option.effects);
+  const status = nextStatus(prev.status, option);
 
   const s = {
     ...prev,
     phase: "effect",
     choices: prev.choices + 1,
     resources: applyEffects(prev.resources, gained),
+    status,
     effect: {
       tag: fill(TEXTS.choiceTag, { tag: card.tag }),
       title: option.label,
       deltas: toDeltas(gained),
       // 표시 전용 스냅샷: 상한·하한, 하루 마감·시간 충전까지 포함한 실제 변화 비교.
       beforeResources: { ...prev.resources },
+      // 이 선택으로 상태가 실제로 켜지거나 꺼졌을 때만 {id, on}
+      status: statusChange(prev.status, status),
       flavor: option.flavor,
       conseq: option.conseq || null,
       dayEnd: null,
@@ -790,8 +871,12 @@ const UI = { row: {}, bar: {}, num: {}, pips: {} };
 
 function el(id) { return document.getElementById(id); }
 
+function svgShape(shapeKey) {
+  return '<svg viewBox="0 0 12 12" aria-hidden="true">' + SHAPES[shapeKey] + "</svg>";
+}
+
 function shape(key) {
-  return '<svg viewBox="0 0 12 12" aria-hidden="true">' + SHAPES[RES[key].shape] + "</svg>";
+  return svgShape(RES[key].shape);
 }
 
 function chip(delta, feedback = false) {
@@ -799,6 +884,13 @@ function chip(delta, feedback = false) {
   const sign = delta.amount < 0 ? "" : "+";
   return '<span class="cost ' + (feedback ? "feedback " : "") + (delta.amount < 0 ? "neg" : "pos") + '" data-res="' + r.key + '">' +
          shape(r.key) + "<span>" + r.ko + " " + sign + delta.amount + "</span></span>";
+}
+
+/* 상태가 켜지거나 꺼진 것을 자원 칩과 같은 자리에 보인다. 켜짐 = 부담(빨강), 꺼짐 = 해소(초록) */
+function statusChip(change) {
+  const st = STATUSES[change.id];
+  return '<span class="cost feedback ' + (change.on ? "neg" : "pos") + '" data-status="' + change.id + '">' +
+         svgShape(st.shape) + "<span>" + fill(change.on ? TEXTS.statusOn : TEXTS.statusOff, { ko: st.ko }) + "</span></span>";
 }
 
 /* 상단 골격은 한 번만 조립 -> 이후 render는 값만 갱신(게이지 트랜지션 유지) */
@@ -843,6 +935,17 @@ function renderTopbar(s) {
   });
 }
 
+/* 켜진 상태 하나를 게이지 아래 띠로. 종료 화면에서는 숨긴다 */
+function renderStatus(s) {
+  const st = s.status && s.phase !== "end" ? STATUSES[s.status] : null;
+  const bar = el("statusbar");
+  bar.classList.toggle("hidden", !st);
+  if (st) bar.dataset.status = s.status; else delete bar.dataset.status;
+  el("statusIco").innerHTML = st ? svgShape(st.shape) : "";
+  el("statusName").textContent = st ? st.ko : "";
+  el("statusDesc").textContent = st ? st.desc : "";
+}
+
 function renderCard(s) {
   const card = CARD[s.cardId];
   el("cardTag").textContent = card.tag;
@@ -855,8 +958,12 @@ function renderCard(s) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "opt";
+    const mark = previewStatus(s, option);
+    const st = mark ? STATUSES[mark.id] : null;
     btn.innerHTML = '<div class="line2"><span class="label">' + option.label + '</span><span class="costs">' +
-                    previewDeltas(option).map(d => chip(d)).join("") + "</span></div>";
+                    previewDeltas(option).map(d => chip(d)).join("") + "</span></div>" +
+                    (mark ? '<div class="mark ' + (mark.on ? "set" : "clear") + '" data-status="' + mark.id + '">' +
+                            svgShape(st.shape) + "<span>" + (mark.on ? st.setText : st.clearText) + "</span></div>" : "");
     btn.addEventListener("click", () => onChoose(i));
     box.appendChild(btn);
   });
@@ -866,7 +973,8 @@ function renderEffect(s) {
   const fx = s.effect;
   el("fxTag").textContent = fx.tag;
   el("fxTitle").textContent = fx.title;
-  el("fxDelta").innerHTML = fx.deltas.map(d => chip(d, resourceChange(s, d.key) !== 0)).join("");
+  el("fxDelta").innerHTML = fx.deltas.map(d => chip(d, resourceChange(s, d.key) !== 0)).join("") +
+                            (fx.status ? statusChip(fx.status) : "");
   el("fxFlavor").textContent = fx.flavor;
 
   const conseq = el("fxConseq");
@@ -900,6 +1008,7 @@ const VIEW_ID = { card: "cardView", effect: "effectView", end: "endView" };
 
 function render(s) {
   renderTopbar(s);
+  renderStatus(s);
   Object.keys(VIEW_ID).forEach(phase => el(VIEW_ID[phase]).classList.toggle("hidden", phase !== s.phase));
   if (s.phase === "card")   renderCard(s);
   if (s.phase === "effect") renderEffect(s);
