@@ -30,6 +30,24 @@ check("시작 화면은 카드", visible("cardView") && !visible("effectView") &
 check("자원 게이지 렌더", document.querySelectorAll("#topbar .stat").length === 3);
 check("카드·선택지 렌더", document.getElementById("cardTitle").textContent.length > 0 && document.querySelectorAll("#options .opt").length >= 2);
 
+/* Loop 6: 답장을 미루면 상태가 생기고, 다음 집 슬롯의 후속 카드에서 해제된다. */
+dom.window.eval(`
+  state = { ...initialState(), cardId: "call", slot: 2, usedToday: ["call"] };
+  render(state);
+`);
+document.querySelectorAll("#options .opt")[1].click();
+check("보류 선택이 상태를 설정", dom.window.eval("state.status") === "replyPending" && visible("effectView"));
+check("상태 획득 피드백 표시", !document.getElementById("fxStatus").classList.contains("hidden") && document.getElementById("fxStatus").textContent.includes("답장 보류"));
+check("상단 상태 배지 표시", !document.getElementById("statusBadge").classList.contains("hidden") && document.getElementById("statusBadge").textContent === "답장 보류");
+document.getElementById("fxNext").click();
+check("다음 집 슬롯에 후속 카드", visible("cardView") && dom.window.eval("state.cardId") === "reply" && dom.window.eval("state.status") === "replyPending");
+document.querySelectorAll("#options .opt")[0].click();
+check("후속 카드가 상태를 해제", dom.window.eval("state.status") === null && !document.getElementById("fxStatus").classList.contains("hidden") && document.getElementById("fxStatus").textContent.includes("정리했다"));
+check("해제 즉시 상단 배지 제거", document.getElementById("statusBadge").classList.contains("hidden"));
+document.getElementById("fxNext").click();
+check("후속 카드 뒤 일반 진행", visible("cardView") && dom.window.eval("state.status") === null);
+dom.window.eval("state = newGame(); render(state)");
+
 /* Loop 4: authored 비용이 아니라 최종 게이지의 실제 변화만 강조한다. */
 const fixtures = [
   { name: "증가·감소", cardId: "dawn", option: 0, expected: ["neg", "pos", "neg"] },
@@ -105,7 +123,7 @@ for (let game = 0; game < 200; game++) {
   if (document.getElementById("endTitle").textContent === "생존") stats.wins++; else stats.losses++;
   document.getElementById("endBtn").click();
   check("다시 시작하면 카드 화면", visible("cardView"));
-  check("재시작 요약·선택·강조 초기화", dom.window.eval("state.choices === 0 && state.ending === null && state.effect === null") && !document.querySelector("#topbar [data-change]") && document.getElementById("endDays").textContent === "");
+  check("재시작 요약·선택·상태·강조 초기화", dom.window.eval("state.choices === 0 && state.status === null && state.ending === null && state.effect === null") && !document.querySelector("#topbar [data-change]") && document.getElementById("statusBadge").classList.contains("hidden") && document.getElementById("endDays").textContent === "");
 }
 
 check("JS 예외 없음", errors.length === 0, errors.slice(0, 2).join(" | "));

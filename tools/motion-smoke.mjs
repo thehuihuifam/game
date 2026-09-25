@@ -63,7 +63,7 @@ try {
         if (r.left < -1 || r.top < -1 || r.right > innerWidth + 1 || r.bottom > innerHeight + 1 || node.scrollWidth > node.clientWidth + 1) issues.push(label);
       };
       for (const card of CARDS) {
-        const start = { ...initialState(), cardId: card.id, day: 3, slot: 4 };
+        const start = { ...initialState(), cardId: card.id, day: 3, slot: 4, status: card.requiresStatus || null };
         render(start);
         document.querySelectorAll("#cardView .card, #options .opt, #options .label, #options .cost").forEach(n => inside(n, card.id + ":card"));
         if (document.querySelector(".card").getBoundingClientRect().bottom > el("options").getBoundingClientRect().top) issues.push(card.id + ":overlap");

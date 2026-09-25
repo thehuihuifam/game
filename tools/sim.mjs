@@ -5,7 +5,8 @@
 import { loadGame, rng } from "./load.mjs";
 
 const g = loadGame();
-const { RESOURCES, DAY_CYCLE } = g;
+const { RESOURCES, DAY_CYCLE, STATUSES } = g;
+const STATUS_FOLLOWUPS = new Set(Object.values(STATUSES).map(status => status.followupCard));
 const N = Number(process.argv[2] || 2000);
 
 /* 선택 점수 계산: 자원을 다 더하는 greedy와, 바닥난 자원을 먼저 보는 smart */
@@ -28,9 +29,10 @@ const score = (mode, g, card, state, rnd) => {
 function playOne(mode, rnd) {
   let s = g.newGame();
   const flow = { health: 0, mood: 0, time: 0 };
-  let picks = 0, nightfall = false;
+  let picks = 0, nightfall = false, statusFollowups = 0;
   for (let guard = 0; guard < 300 && s.phase !== "end"; guard++) {
     if (s.phase === "card") {
+      if (STATUS_FOLLOWUPS.has(s.cardId)) statusFollowups++;
       const before = { ...s.resources };
       const idx = mode === "random" ? Math.floor(rnd() * g.CARD[s.cardId].options.length) : score(mode, g, g.CARD[s.cardId], s, rnd);
       s = g.choose(s, idx);
@@ -41,7 +43,7 @@ function playOne(mode, rnd) {
       s = g.next(s);
     }
   }
-  return { state: s, flow, picks, nightfall };
+  return { state: s, flow, picks, nightfall, statusFollowups };
 }
 
 const modes = ["random", "greedy", "smart", "worst"];
@@ -49,18 +51,19 @@ console.log(`판수 ${N} · 목표 ${DAY_CYCLE.goalDays}일 · 하루 ${DAY_CYCL
 for (const mode of modes) {
   const rnd = rng(20260923);
   const deaths = {};
-  let win = 0, picks = 0, nightfalls = 0;
+  let win = 0, picks = 0, nightfalls = 0, statusFollowups = 0;
   const flow = { health: 0, mood: 0, time: 0 };
   for (let i = 0; i < N; i++) {
     const r = playOne(mode, rnd);
     win += r.state.ending.win ? 1 : 0;
     if (r.nightfall) nightfalls++;
+    statusFollowups += r.statusFollowups;
     picks += r.picks;
     for (const k of Object.keys(flow)) flow[k] += r.flow[k];
     if (!r.state.ending.win) deaths[r.state.ending.why.slice(0, 12)] = (deaths[r.state.ending.why.slice(0, 12)] || 0) + 1;
   }
   const pct = v => (v / N * 100).toFixed(1) + "%";
-  console.log(`[${mode.padEnd(6)}] 완주 ${pct(win).padStart(6)} · 픽/판 ${(picks / N).toFixed(1)} · 하루 조기 종료(nightfall) ${pct(nightfalls)}`);
+  console.log(`[${mode.padEnd(6)}] 완주 ${pct(win).padStart(6)} · 픽/판 ${(picks / N).toFixed(1)} · 하루 조기 종료(nightfall) ${pct(nightfalls)} · 보류 답장 후속 ${statusFollowups}회`);
   console.log(`         픽당 자원 변화: ${RESOURCES.map(r => `${r.ko} ${(flow[r.key] / picks).toFixed(2)}`).join(", ")}`);
   const d = Object.entries(deaths).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}… ${pct(v)}`);
   console.log(`         죽음: ${d.length ? d.join(" | ") : "없음"}\n`);

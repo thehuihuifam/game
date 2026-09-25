@@ -37,7 +37,7 @@
 
 - 스택: 외부 빌드 툴·프레임워크 없이 정적 HTML/CSS/JS 단일 파일(또는 몇 개의 평범한 정적 파일). `python3 -m http.server`로 로컬 제공.
 - 에셋: 이미지·폰트·라이브러리·CDN 금지. UI는 전부 SVG/CSS 도형 + 시스템 텍스트. **게임 런타임에 의존성을 추가하지 않는다.**
-- 검사 도구(`tools/`, 게임 런타임 아님): `node tools/check.mjs`(무결성 규칙 1~6) · `node tools/sim.mjs [판수]`(밸런스) · `node tools/dom-smoke.mjs`(jsdom 있을 때만, 없으면 건너뜀).
+- 검사 도구(`tools/`, 게임 런타임 아님): `node tools/check.mjs`(무결성 규칙 1~7·상태 전이) · `node tools/sim.mjs [판수]`(밸런스) · `node tools/dom-smoke.mjs`(jsdom 있을 때만, 없으면 건너뜀).
   실제 CSS·모바일 검사: `node tools/motion-smoke.mjs`(저장소 밖에 Playwright·Chromium 설치 필요, `CHROMIUM_PATH`·`GAME_URL` 선택). 게임 런타임 의존성은 아니다.
   도구는 `index.html`의 DATA·RULE 구역 경계 주석을 잘라 쓴다 — 경계 주석을 지우면 도구가 깨진다.
   카드·자원·사이클의 숫자나 스키마를 건드린 Loop은 `check.mjs` 통과를 완료 조건에 넣는다.
@@ -57,7 +57,7 @@ Loop이 **실제로 필요로 만든** 시스템만 여기에 승격한다. 미�
 
 | 구역 | 책임 | 금지 |
 |------|------|------|
-| DATA | 자원·카드·팩·하루 사이클·문구(`TEXTS`·`ENDINGS`). 읽기 전용 상수 | DOM 접근, state 변경 |
+| DATA | 자원·상태·카드·팩·하루 사이클·문구(`TEXTS`·`ENDINGS`). 읽기 전용 상수 | DOM 접근, state 변경 |
 | RULE | 순수 함수. `state + 입력 -> 새 state` (입력 state는 바꾸지 않는다) | DOM 접근 |
 | VIEW | `render(state)` — state -> DOM **단방향**, state 하나로 화면이 전부 결정 | state 변경, 판정·수식 정책 |
 | CONTROLLER | 이벤트 -> RULE 호출 -> `render` | 직접 DOM 조작, 판정 |
@@ -65,7 +65,7 @@ Loop이 **실제로 필요로 만든** 시스템만 여기에 승격한다. 미�
 ### state 스키마 (단일 원천)
 
 ```
-{ phase, day, slot, resources, cardId, usedToday, choices, effect, pending, ending }
+{ phase, day, slot, resources, cardId, usedToday, choices, status, effect, pending, ending }
 ```
 
 | 필드 | 값 | 뜻 |
@@ -77,7 +77,8 @@ Loop이 **실제로 필요로 만든** 시스템만 여기에 승격한다. 미�
 | `cardId` | string | 현재 카드 |
 | `usedToday` | string[] | 오늘 이미 나온 카드(중복 방지). 새 하루에 리셋 |
 | `choices` | 0.. | 이번 판에서 선택한 카드 옵션 수. 새 판에서 0으로 초기화 |
-| `effect` | null \| 페이로드 | `{tag, title, deltas, beforeResources, flavor, conseq, dayEnd, nextLabel}` — 효과 화면이 표시할 것 전부 |
+| `status` | `null` \| statusId | 판 안에 하나만 유지하는 현재 상태. 새 판에서 `null`로 초기화 |
+| `effect` | null \| 페이로드 | `{tag, title, deltas, beforeResources, statusChange, flavor, conseq, dayEnd, nextLabel}` — 효과 화면이 표시할 것 전부 |
 | `pending` | null \| `slot` \| `day` \| `end` | 효과 화면의 "다음"이 어디로 갈지 |
 | `ending` | null \| `{win, why, summary}` | `phase==="end"`일 때만 값. `summary={days, choices, resources}`는 종료 시점의 판 요약이며 `days`는 승리 시 `goalDays`, 그 외에는 마지막 진행 일차 |
 
@@ -89,18 +90,33 @@ Loop이 **실제로 필요로 만든** 시스템만 여기에 승격한다. 미�
 확정 자원(Loop 2에서 숫자 변경 없음): 체력 0~100 시작 48 deadly / 기분 0~100 시작 48 deadly / 시간 0~12 시작 8 non-deadly.
 **시간은 소진돼도 죽지 않는다** → `nightfall`(하루 강제 종료)로 전이.
 
+### 상태 스키마 `STATUSES` (Loop 6 승격)
+
+```
+STATUSES { <statusId>: { ko, followupCard } }
+OPTION.setStatus?: statusId
+CARD.requiresStatus?: statusId
+CARD.resolvesStatus?: statusId
+```
+
+- `state.status`는 배열이 아닌 단일 슬롯이다. `OPTION.setStatus`를 고르면 해당 값으로 바뀌며, `CARD.resolvesStatus`와 현재 값이 같으면 그 카드의 **어느 선택지든** 고르는 즉시 `null`로 해제한다. 다른 카드·하루 넘김·`nightfall`에서는 유지하고, 새 판/재시작에서만 초기화한다.
+- `replyPending` = `call` 카드의 「수업이 다 끝나고 답한다」 선택으로 생기는 **답장 보류**다. `reply` 카드가 해제 카드다. `reply`의 수치는 선택 비용과 별도로, 미뤄 둔 선택이 다음 카드에 남기는 비용이다.
+- 상태가 있으면 `STATUSES[status].followupCard`는 자기 팩이 포함된 **첫 다음 슬롯**에서 무작위 드로보다 우선한다. `requiresStatus` 카드가 상태가 없거나 다른 상태일 때 일반 후보에 드는 일은 없다.
+- `effect.statusChange` = `null | {before, after}` (`before`/`after`는 `null | statusId`). 활성 상태는 상단 배지, 획득·해제는 효과 패널의 DATA 템플릿으로 표시한다.
+
 ### 카드·팩 스키마
 
 ```
 PACKS  { <packId>: { ko, cards: [cardId, ...] } }   ← 팩이 카드를 참조(단방향). 카드는 자기 팩을 모른다
-CARD   { id, tag, title, text, minDay?, options: [OPTION] }   ← 소재는 MATERIALS.md에서 픽션화
-OPTION { label, flavor, effects: {<resourceKey>: number}, conseq: {tone, text} }
+CARD   { id, tag, title, text, minDay?, requiresStatus?, resolvesStatus?, options: [OPTION] }   ← 소재는 MATERIALS.md에서 픽션화
+OPTION { label, flavor, effects: {<resourceKey>: number}, setStatus?, conseq: {tone, text} }
 ```
 
 - `effects`에 없는 자원 = 0. 부호·색·라벨 같은 **표시는 VIEW가 계산**하고, DATA는 authored 값만 가진다.
 - 시간 표시·적용값 = `effects.time - DAY_CYCLE.baseTimeCost`.
 - `conseq.tone` ∈ `good` \| `bad` \| `note`.
 - `minDay`(선택, 기본 1) = 이 카드가 후보에 드는 **첫 일차**. 뒤 일차에 무거운 카드를 섞어 압박 곡선을 만드는 장치이며, 시스템 추가 없이 DATA만으로 굴곡을 만든다. 팩은 장소, 일차는 카드가 정한다.
+- `setStatus`·`requiresStatus`·`resolvesStatus`는 모두 `STATUSES`의 id만 참조한다. 보류 후속 카드는 팩에는 속하지만, `requiresStatus` 조건을 충족할 때만 일반 후보가 된다.
 
 ### 하루 사이클 스키마 `DAY_CYCLE`
 
@@ -116,15 +132,15 @@ OPTION { label, flavor, effects: {<resourceKey>: number}, conseq: {tone, text} }
 
 확정값(Loop 2는 기존 숫자를 그대로 옮기기만 한다): `goalDays 3`, `baseTimeCost 1`, `timeRefill 12`, `rest {health:+4, mood:+3}`, `nightfall {health:-5, mood:-4}`, 슬롯 5칸 = 아침 → 아침·학교 → 학교 → 학교·집 → 집.
 
-**드로 규칙**: `slots[slot].packs`의 카드 중 `minDay ≤ day`인 것 → `usedToday`에 없는 것 → 무작위 1장.
-그날 후보가 전부 이미 나왔으면 중복을 허용한다(풀 부족 시 자동 해제).
+**드로 규칙**: 활성 상태의 `followupCard`가 현재 슬롯의 팩에 속하면 그것을 먼저 뽑는다. 그 외에는 `slots[slot].packs`의 카드 중 `minDay ≤ day` 및 `requiresStatus` 조건을 만족하는 것 → `usedToday`에 없는 것 → 무작위 1장.
+그날 후보가 전부 이미 나왔으면 중복을 허용한다(풀 부족 시 자동 해제). 상태 후속 카드의 강제 드로는 정상 진행에서 하루 중복을 만들지 않는다.
 
 ### 상태 전이
 
 | # | 현재 phase | 트리거 | 조건 | 다음 phase | 하는 일 |
 |---|-----------|--------|------|-----------|---------|
 | T0 | — | `newGame()` | — | `card` | state 초기화 → 슬롯 0 드로 |
-| T1 | `card` | `choose(i)` | 항상 | `effect` | `choices` 증가 → 옵션 `effects` 적용 → 하루 종료 판정 → `effect` 페이로드 기록 |
+| T1 | `card` | `choose(i)` | 항상 | `effect` | `choices` 증가 → `setStatus`/`resolvesStatus` 적용 → 옵션 `effects` 적용 → 하루 종료 판정 → `effect` 페이로드 기록 |
 | T2 | `effect` | `next()` | `pending==="end"` | `end` | — |
 | T3 | `effect` | `next()` | `pending==="day"` | `card` | `slot=0`, `usedToday=[]`, 드로 |
 | T4 | `effect` | `next()` | `pending==="slot"` | `card` | `slot+1`, 드로 |
@@ -133,6 +149,7 @@ OPTION { label, flavor, effects: {<resourceKey>: number}, conseq: {tone, text} }
 - **죽음·승리도 `effect`를 지난다.** 불변식 2("선택 즉시 효과 표시")를 끊지 않으려고 T1은 항상 `effect`로 가고, 종료 화면은 T2에서 넘긴다.
 - T1 안의 판정 우선순위: ① deadly 자원 `min` 도달 → 죽음 ② 시간 `min` 도달 → `nightfall` 적용 후 deadly 재검사 → 죽음 or 하루 넘김 ③ 마지막 슬롯 → `rest` 적용 후 하루 넘김 ④ `day > goalDays` → 승리 ⑤ 아니면 계속.
 - 하루 넘김에서 `day+1`·`timeRefill`은 **T1 시점**에 적용한다(효과 화면의 숫자와 상단 게이지가 어긋나지 않게). 카드 드로만 T3에서.
+- 상태 획득·해제도 T1 안에서 끝나므로 선택 직후 효과 화면과 상단 배지가 같은 `state.status`를 가리킨다.
 
 ### 데이터 무결성 규칙 (카드·자원을 추가할 때마다 지킨다)
 
@@ -142,6 +159,7 @@ OPTION { label, flavor, effects: {<resourceKey>: number}, conseq: {tone, text} }
 4. `conseq.tone`은 `good|bad|note` 중 하나.
 5. 각 슬롯의 후보 카드는 1장 이상이고, 하루 길이만큼 **중복 없이** 뽑을 수 있어야 한다(일차별로 `minDay`를 반영해 검사).
 6. `minDay`는 1 이상 정수. 카드의 `minDay`가 올라가도 어느 일차에서도 슬롯 후보가 비지 않아야 한다(규칙 5가 함께 검사).
+7. `setStatus`·`requiresStatus`·`resolvesStatus`는 유효한 `STATUSES` id만 참조한다. 각 상태의 `followupCard`는 그 상태를 요구하고 해제하며, 적어도 하나의 슬롯에 속해야 한다. 비활성 상태 카드가 일반 후보로 드로되면 안 된다.
 
 
 ### 선택 결과 표시 (Loop 4 승격)
