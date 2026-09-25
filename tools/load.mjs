@@ -9,8 +9,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const EXPORTS = "RESOURCES, SHAPES, CARDS, PACKS, DAY_CYCLE, TEXTS, ENDINGS, " +
-  "RES, CARD, fill, initialState, newGame, choose, next, drawSlot, withBaseCost, toDeltas, previewDeltas, deadKey";
+const EXPORTS = "RESOURCES, SHAPES, STATUSES, CARDS, PACKS, DAY_CYCLE, TEXTS, ENDINGS, " +
+  "RES, CARD, fill, initialState, newGame, choose, next, drawSlot, poolAt, withBaseCost, toDeltas, previewDeltas, deadKey";
 
 export function loadGame(file = join(ROOT, "index.html")) {
   const html = readFileSync(file, "utf8");

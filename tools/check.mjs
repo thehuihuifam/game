@@ -1,10 +1,10 @@
-/* 데이터 무결성 검사 — AGENTS.md "데이터 무결성 규칙 1~5" + 카드 풀 최소 조건.
+/* 데이터 무결성 검사 — AGENTS.md "데이터 무결성 규칙 1~7" + 카드 풀·상태 전이 최소 조건.
  * 쓰는 법: node tools/check.mjs   (실패가 있으면 exit 1)
  */
 import { loadGame } from "./load.mjs";
 
 const g = loadGame();
-const { RESOURCES, CARDS, PACKS, DAY_CYCLE, CARD } = g;
+const { RESOURCES, STATUSES, CARDS, PACKS, DAY_CYCLE, CARD, initialState, newGame, choose, drawSlot, poolAt: gamePoolAt } = g;
 
 const fails = [];
 const ok = [];
@@ -44,8 +44,7 @@ t("규칙4 tone 유효", !CARDS.some(c => c.options.some(o => !o.conseq || !tone
   CARDS.filter(c => c.options.some(o => !o.conseq || !tones.includes(o.conseq.tone))).map(c => c.id).join(","));
 
 /* 규칙 5: 슬롯마다 후보 ≥1, 그리고 하루를 중복 없이 뽑을 수 있다(카드의 minDay 게이트 반영) */
-const inDay = (cid, day) => (CARD[cid].minDay || 1) <= day;
-const poolAt = (slot, day) => [...new Set(DAY_CYCLE.slots[slot].packs.filter(p => PACKS[p]).flatMap(p => PACKS[p].cards))].filter(id => inDay(id, day));
+const poolAt = (slot, day) => [...new Set(gamePoolAt(slot, day, [], null))];
 for (let day = 1; day <= DAY_CYCLE.goalDays; day++) {
   const pools = DAY_CYCLE.slots.map((_, i) => poolAt(i, day));
   t(`규칙5 슬롯 후보 ≥1 (${day}일차)`, pools.every(p => p.length >= 1), pools.map(p => p.length).join("/"));
@@ -77,6 +76,55 @@ t("카드 필수 칸 채움", CARDS.every(c => c.tag && c.title && c.text));
 t("선택지 필수 칸 채움", CARDS.every(c => c.options.every(o => o.label && o.flavor && o.conseq && o.conseq.text)));
 t("minDay는 1 이상 정수", CARDS.every(c => c.minDay === undefined || (Number.isInteger(c.minDay) && c.minDay >= 1)),
   CARDS.filter(c => c.minDay !== undefined && !(Number.isInteger(c.minDay) && c.minDay >= 1)).map(c => c.id).join(","));
+
+/* 규칙 7: 상태 참조와 후속 카드의 획득·해제 경로가 유효하다. */
+const statusIds = new Set(Object.keys(STATUSES));
+const statusProblems = [];
+for (const [id, status] of Object.entries(STATUSES)) {
+  const followup = CARD[status.followupCard];
+  if (!status.ko) statusProblems.push(`${id}:이름 없음`);
+  if (!followup) statusProblems.push(`${id}:후속 카드 없음`);
+  else {
+    if (followup.requiresStatus !== id) statusProblems.push(`${id}:후속 카드 조건`);
+    if (followup.resolvesStatus !== id) statusProblems.push(`${id}:후속 카드 해제`);
+    const inSlot = DAY_CYCLE.slots.some(slot => slot.packs.some(pid => PACKS[pid] && PACKS[pid].cards.includes(followup.id)));
+    if (!inSlot) statusProblems.push(`${id}:후속 카드 슬롯 없음`);
+  }
+}
+for (const card of CARDS) {
+  if (card.requiresStatus && !statusIds.has(card.requiresStatus)) statusProblems.push(`${card.id}:requiresStatus`);
+  if (card.resolvesStatus && !statusIds.has(card.resolvesStatus)) statusProblems.push(`${card.id}:resolvesStatus`);
+  if (card.requiresStatus && card.resolvesStatus && card.requiresStatus !== card.resolvesStatus) statusProblems.push(`${card.id}:상태 불일치`);
+  card.options.forEach((option, index) => {
+    if (option.setStatus && !statusIds.has(option.setStatus)) statusProblems.push(`${card.id}#${index}:setStatus`);
+  });
+}
+t("규칙7 상태 참조·후속 카드 유효", statusProblems.length === 0, statusProblems.join(","));
+const statusStarts = Object.fromEntries([...statusIds].map(id => [id, []]));
+for (const card of CARDS) card.options.forEach((option, index) => {
+  if (option.setStatus) statusStarts[option.setStatus].push(`${card.id}#${index}`);
+});
+t("상태마다 획득 선택 하나", Object.values(statusStarts).every(starts => starts.length === 1),
+  Object.entries(statusStarts).filter(([, starts]) => starts.length !== 1).map(([id, starts]) => `${id}:${starts.join("/")}`).join(","));
+const hiddenStatusCards = [];
+for (let day = 1; day <= DAY_CYCLE.goalDays; day++) for (let slot = 0; slot < DAY_CYCLE.slots.length; slot++) {
+  for (const id of poolAt(slot, day)) if (CARD[id].requiresStatus) hiddenStatusCards.push(`${day}-${slot}:${id}`);
+}
+t("상태 카드 비활성 때 드로 제외", hiddenStatusCards.length === 0, hiddenStatusCards.join(","));
+
+/* Loop 6 전이: 보류 선택 → 일반 슬롯 유지 → 집 슬롯 후속 카드 강제 → 해제 → 새 판 초기화. */
+const statusStart = { ...initialState(), cardId: "call", slot: 2, usedToday: ["call"] };
+const pendingReply = choose(statusStart, 1);
+t("상태 획득은 결정적", pendingReply.status === "replyPending" && pendingReply.effect.statusChange?.after === "replyPending");
+const retainedReply = drawSlot({ ...initialState(), day: 1, slot: 2, status: "replyPending" });
+t("상태는 후속 장소 전까지 유지", retainedReply.status === "replyPending" && retainedReply.cardId !== "reply");
+const nightfallReply = choose({ ...initialState(), cardId: "dawn", slot: 0, status: "replyPending", resources: { ...initialState().resources, time: 1 } }, 0);
+t("상태는 nightfall·하루 넘김을 지나 유지", nightfallReply.status === "replyPending" && nightfallReply.pending === "day" && nightfallReply.day === 2);
+const forcedReply = drawSlot({ ...initialState(), day: 1, slot: 4, status: "replyPending" });
+t("상태 후속 카드는 집 슬롯에서 강제", forcedReply.cardId === "reply" && forcedReply.status === "replyPending");
+const clearedReply = choose(forcedReply, 0);
+t("후속 카드 선택은 상태 해제", clearedReply.status === null && clearedReply.effect.statusChange?.before === "replyPending");
+t("새 판 상태 초기화", newGame().status === null);
 
 /* 픽션화: 실제 기관·지역·통계 수치를 문구에 노출하지 않는다 (MATERIALS.md 픽션화 규칙 5) */
 const banned = ["교육청", "교육부", "학폭위", "교권보호위", "82cook", "나무위키", "브런치", "%"];
