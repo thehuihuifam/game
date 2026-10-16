@@ -1,0 +1,16 @@
+{
+  "name": "neon-foundry-tests",
+  "private": true,
+  "scripts": {
+    "test": "node tests/logic.cjs",
+    "test:play": "node tests/play.cjs",
+    "test:input": "node tests/recheck.cjs",
+    "test:fixture": "node tests/fixture.cjs",
+    "test:layout": "node tests/layout.cjs",
+    "test:font": "node tests/font.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.64.1",
+    "@sparticuz/chromium": "153.0.0"
+  }
+}

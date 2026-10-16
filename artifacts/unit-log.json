@@ -1,0 +1,63 @@
+{
+  "syntax": "PASS",
+  "tests": [
+    {
+      "name": "64 unique weapons / valid tags / distinct configs",
+      "pass": true
+    },
+    {
+      "name": "16 recipes change emitter / 5 starters",
+      "pass": true
+    },
+    {
+      "name": "first level within 5 seconds",
+      "pass": true
+    },
+    {
+      "name": "choice applies and simulation pauses at upgrade",
+      "pass": true
+    },
+    {
+      "name": "auto fire all 64 + 16 evolved no errors",
+      "pass": true
+    },
+    {
+      "name": "pool caps enemies/projectiles/particles",
+      "pass": true
+    },
+    {
+      "name": "3/5 synergy and fusion max tier",
+      "pass": true
+    },
+    {
+      "name": "all 16 recipes eligible only with Lv8 + passive + chest",
+      "pass": true
+    },
+    {
+      "name": "tag weighted distribution 10000 samples",
+      "pass": true
+    },
+    {
+      "name": "slots bounded 4 to 8 / four nonduplicate choices",
+      "pass": true
+    },
+    {
+      "name": "dash cooldown, pause freezes, HP0 and restart",
+      "pass": true
+    },
+    {
+      "name": "240 second victory boundary",
+      "pass": true
+    },
+    {
+      "name": "snapshot is a copy / no mutation API",
+      "pass": true
+    }
+  ],
+  "distribution": {
+    "matching": 9063,
+    "unrelated": 937,
+    "matchingWeight": 10,
+    "unrelatedWeight": 1
+  }
+}

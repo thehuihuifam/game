@@ -1,0 +1,200 @@
+{
+  "logs": [
+    {
+      "label": "round2-normal-end",
+      "state": "playing",
+      "time": 62.014100000001314,
+      "kills": 24,
+      "level": 2,
+      "xp": 8,
+      "need": 12,
+      "slots": 4,
+      "player": {
+        "x": 1191.2267700000011,
+        "y": -61.47765000000629,
+        "hp": 62,
+        "maxHp": 100,
+        "arch": 1,
+        "inv": 0,
+        "dash": 0.8667000000000165,
+        "dashTime": 0
+      },
+      "inventory": [
+        {
+          "id": 4,
+          "lv": 1,
+          "tier": 0,
+          "cd": 0.4874000000000089,
+          "evolved": false,
+          "name": "권총"
+        }
+      ],
+      "passives": {
+        "boots": 1
+      },
+      "synergies": {
+        "원거리": 1,
+        "물리": 1
+      },
+      "enemies": 61,
+      "projectiles": 2,
+      "particles": 2,
+      "fps": 59.99753502163293,
+      "seed": 1132239653,
+      "stats": {
+        "shots": 96,
+        "damage": 1738,
+        "choices": 1,
+        "dashes": 19,
+        "chests": 0,
+        "peakEnemies": 61
+      },
+      "content": {
+        "weapons": 64,
+        "tags": 16,
+        "recipes": 16,
+        "starters": 5
+      }
+    },
+    {
+      "label": "round3-novice-failure",
+      "state": "gameover",
+      "time": 60.147600000001354,
+      "kills": 69,
+      "level": 8,
+      "xp": 23,
+      "need": 31,
+      "slots": 4,
+      "player": {
+        "x": 0,
+        "y": 0,
+        "hp": 0,
+        "maxHp": 100,
+        "arch": 0,
+        "inv": 0.7,
+        "dash": 0,
+        "dashTime": 0
+      },
+      "inventory": [
+        {
+          "id": 0,
+          "lv": 1,
+          "tier": 0,
+          "cd": 0.18340000000000145,
+          "evolved": false,
+          "name": "단검"
+        },
+        {
+          "id": 46,
+          "lv": 2,
+          "tier": 0,
+          "cd": 1.1681826086956557,
+          "evolved": false,
+          "name": "빙결화환"
+        },
+        {
+          "id": 62,
+          "lv": 3,
+          "tier": 0,
+          "cd": 1.7531261682242996,
+          "evolved": false,
+          "name": "불꽃비"
+        },
+        {
+          "id": 35,
+          "lv": 1,
+          "tier": 0,
+          "cd": 0.5298000000000029,
+          "evolved": false,
+          "name": "혜성고리"
+        }
+      ],
+      "passives": {
+        "magnet": 1
+      },
+      "synergies": {
+        "근접": 1,
+        "물리": 2,
+        "냉기": 1,
+        "폭발": 1,
+        "원거리": 1,
+        "관통": 1,
+        "부메랑": 1
+      },
+      "enemies": 13,
+      "projectiles": 9,
+      "particles": 13,
+      "fps": 59.99490742310618,
+      "seed": 1132315470,
+      "stats": {
+        "shots": 304,
+        "damage": 6608.705759999997,
+        "choices": 7,
+        "dashes": 0,
+        "chests": 0,
+        "peakEnemies": 16
+      },
+      "content": {
+        "weapons": 64,
+        "tags": 16,
+        "recipes": 16,
+        "starters": 5
+      }
+    },
+    {
+      "label": "round3-restart",
+      "state": "playing",
+      "time": 0,
+      "kills": 0,
+      "level": 1,
+      "xp": 0,
+      "need": 4,
+      "slots": 4,
+      "player": {
+        "x": 0,
+        "y": 0,
+        "hp": 100,
+        "maxHp": 100,
+        "arch": 0,
+        "inv": 0,
+        "dash": 0,
+        "dashTime": 0
+      },
+      "inventory": [
+        {
+          "id": 0,
+          "lv": 1,
+          "tier": 0,
+          "cd": 0.1,
+          "evolved": false,
+          "name": "단검"
+        }
+      ],
+      "passives": {},
+      "synergies": {
+        "근접": 1,
+        "물리": 1
+      },
+      "enemies": 0,
+      "projectiles": 0,
+      "particles": 0,
+      "fps": 59.99122849119807,
+      "seed": 1132383431,
+      "stats": {
+        "shots": 0,
+        "damage": 0,
+        "choices": 0,
+        "dashes": 0,
+        "chests": 0,
+        "peakEnemies": 0
+      },
+      "content": {
+        "weapons": 64,
+        "tags": 16,
+        "recipes": 16,
+        "starters": 5
+      }
+    }
+  ],
+  "errors": []
+}
