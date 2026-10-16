@@ -1,0 +1,2193 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"
+    />
+    <title>NEON FOUNDRY · 네온 파운드리</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --cyan: #65ffe0;
+        --gold: #ffcf75;
+        --ink: #080e1b;
+        --muted: #8c9eb5;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--ink);
+        color: #ecf6ff;
+        font:
+          14px system-ui,
+          sans-serif;
+        overflow: hidden;
+        touch-action: none;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+        min-width: 44px;
+        min-height: 46px;
+        border: 1px solid #34455f;
+        border-radius: 12px;
+        background: #15243a;
+        padding: 10px 15px;
+      }
+      button:hover {
+        border-color: var(--cyan);
+        background: #20394b;
+      }
+      button:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      button:focus-visible {
+        outline: 2px solid var(--gold);
+      }
+      canvas {
+        display: block;
+        width: 100vw;
+        height: 100dvh;
+      }
+      #hud {
+        position: fixed;
+        top: max(14px, env(safe-area-inset-top));
+        left: 18px;
+        right: 18px;
+        pointer-events: none;
+      }
+      #top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      #brand {
+        font-size: 11px;
+        letter-spacing: 3px;
+        color: var(--cyan);
+      }
+      #timer {
+        font: 600 24px monospace;
+        margin-left: auto;
+      }
+      #pause {
+        pointer-events: auto;
+        padding: 6px 14px;
+      }
+      #bars {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 10px;
+      }
+      .bar {
+        height: 6px;
+        background: #233146;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .bar i {
+        display: block;
+        height: 100%;
+        width: 100%;
+        background: var(--cyan);
+      }
+      #xpbar {
+        background: #a58aff;
+      }
+      #stats {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+      #synergies {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-top: 10px;
+        pointer-events: auto;
+        max-width: 85%;
+      }
+      .tag {
+        font-size: 10px;
+        border: 1px solid #44645f;
+        border-radius: 6px;
+        padding: 4px;
+        background: #0a211fdd;
+        color: var(--cyan);
+      }
+      #build {
+        position: fixed;
+        left: 18px;
+        top: 136px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        max-width: 75%;
+        pointer-events: none;
+      }
+      .slot {
+        border-left: 2px solid #6c87a3;
+        background: #0f1c2dcc;
+        padding: 5px 7px;
+        font-size: 10px;
+      }
+      .slot b {
+        color: var(--gold);
+      }
+      #joystick {
+        position: fixed;
+        bottom: max(30px, env(safe-area-inset-bottom));
+        left: 24px;
+        width: 122px;
+        height: 122px;
+        border-radius: 50%;
+        border: 1px solid #65ffe044;
+        background: #65ffe00a;
+        touch-action: none;
+        display: grid;
+        place-items: center;
+      }
+      #stick {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        border: 1px solid #65ffe077;
+        background: #65ffe025;
+        pointer-events: none;
+      }
+      #dash {
+        position: fixed;
+        bottom: max(48px, env(safe-area-inset-bottom));
+        right: 26px;
+        border-radius: 50%;
+        width: 86px;
+        height: 86px;
+        border: 1px solid var(--cyan);
+        background: #13333ac9;
+        touch-action: none;
+        font-size: 12px;
+      }
+      #dash strong {
+        display: block;
+        font-size: 22px;
+      }
+      #hint {
+        position: fixed;
+        bottom: 180px;
+        left: 26px;
+        color: #65ffe0aa;
+        font-size: 12px;
+        pointer-events: none;
+      }
+      #toast {
+        position: fixed;
+        top: 24%;
+        left: 10%;
+        width: 80%;
+        text-align: center;
+        color: var(--gold);
+        pointer-events: none;
+        font-size: 15px;
+      }
+      #overlay {
+        position: fixed;
+        inset: 0;
+        background: #050b16d9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        backdrop-filter: blur(8px);
+        overflow: auto;
+      }
+      #overlay.hidden {
+        display: none;
+      }
+      .panel {
+        width: min(640px, 100%);
+        max-height: 92dvh;
+        overflow: auto;
+        padding: 26px;
+        background: linear-gradient(145deg, #142238, #091322);
+        border: 1px solid #39536a;
+        border-radius: 22px;
+        box-shadow: 0 25px 100px #0008;
+      }
+      .eyebrow {
+        font-size: 10px;
+        color: var(--cyan);
+        letter-spacing: 4px;
+      }
+      h1 {
+        font-size: clamp(36px, 9vw, 64px);
+        line-height: 0.95;
+        letter-spacing: -2px;
+        margin: 16px 0;
+      }
+      h2 {
+        margin: 12px 0;
+      }
+      p {
+        line-height: 1.6;
+        color: var(--muted);
+      }
+      .accent {
+        color: var(--cyan);
+      }
+      .cards {
+        display: grid;
+        gap: 9px;
+        margin: 20px 0;
+      }
+      .card {
+        text-align: left;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+        background: #14263b;
+      }
+      .glyph {
+        font-size: 26px;
+        color: var(--cyan);
+        width: 32px;
+        text-align: center;
+      }
+      .card small {
+        display: block;
+        color: var(--muted);
+        margin-top: 4px;
+        font-size: 11px;
+        line-height: 1.5;
+      }
+      .card b {
+        font-size: 15px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .primary {
+        background: #65ffe0;
+        color: #071720;
+        border: 0;
+        font-weight: 800;
+      }
+      .foot {
+        font-size: 10px;
+        letter-spacing: 1px;
+        color: #71839c;
+        margin-top: 18px;
+      }
+      .recipe {
+        font-size: 12px;
+        padding: 9px;
+        border-bottom: 1px solid #2b3d54;
+      }
+      .chip {
+        color: var(--gold);
+      }
+      @media (min-width: 800px) {
+        #hud {
+          left: 32px;
+          right: 32px;
+        }
+        #bars {
+          max-width: 500px;
+        }
+        #build {
+          left: 32px;
+        }
+        #joystick {
+          left: 60px;
+          bottom: 45px;
+        }
+        #dash {
+          right: 60px;
+          bottom: 62px;
+        }
+        .cards.starters {
+          grid-template-columns: 1fr 1fr;
+        }
+        .panel {
+          padding: 32px;
+        }
+      }
+      @media (max-height: 500px) {
+        .panel {
+          padding: 16px;
+        }
+        h1 {
+          font-size: 30px;
+        }
+        .cards.starters {
+          grid-template-columns: repeat(3, 1fr);
+        }
+        #build {
+          top: 110px;
+        }
+        #joystick {
+          width: 95px;
+          height: 95px;
+          bottom: 15px;
+        }
+        #dash {
+          bottom: 15px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="world" aria-label="네온 파운드리 게임 화면"></canvas>
+    <div id="hud">
+      <div id="top">
+        <span id="brand">NF / SECTOR 07</span><span id="timer">04:00</span
+        ><button id="pause" aria-label="일시정지">Ⅱ</button>
+      </div>
+      <div id="bars">
+        <div class="bar"><i id="hpbar"></i></div>
+        <div class="bar"><i id="xpbar"></i></div>
+      </div>
+      <div id="stats">
+        <span id="health">100 / 100 HP</span><span id="level">LV 1</span
+        ><span id="kills">0 KILLS</span><span id="fps">60 FPS</span>
+      </div>
+      <div id="synergies"></div>
+    </div>
+    <div id="build"></div>
+    <div id="hint">↑ 이동 &nbsp; · &nbsp; 자동 사격 ↗</div>
+    <div id="toast"></div>
+    <div id="joystick" aria-label="이동 조이스틱"><div id="stick"></div></div>
+    <button id="dash" aria-label="대시">
+      <strong>↗</strong><span>대시</span>
+    </button>
+    <div id="overlay"><div class="panel" id="panel"></div></div>
+    <script>
+      "use strict";
+      const $ = (id) => document.getElementById(id),
+        canvas = $("world"),
+        ctx = canvas.getContext("2d");
+      const TAGS = [
+        "근접",
+        "원거리",
+        "폭발",
+        "전기",
+        "독",
+        "냉기",
+        "화염",
+        "물리",
+        "에너지",
+        "소환",
+        "관통",
+        "연쇄",
+        "설치",
+        "오라",
+        "부메랑",
+        "분열",
+      ];
+      const TAG_ICONS = [
+        "/",
+        "+",
+        "*",
+        "Z",
+        "%",
+        "X",
+        "~",
+        "#",
+        "O",
+        "&",
+        "|",
+        "=",
+        ":",
+        "@",
+        "C",
+        "Y",
+      ];
+      const EFFECTS = [
+        "근접 범위 +30%",
+        "투사체 속도 +30%",
+        "폭발 범위 +30%",
+        "연쇄 +1회",
+        "독 지속 +2초",
+        "냉기 둔화 65%",
+        "처치 시 화염 폭발",
+        "치명타 확률 25%",
+        "공격 주기 15% 단축",
+        "소환수 +1기",
+        "관통 +2명",
+        "연쇄 사거리 +40%",
+        "설치 지속 +50%",
+        "흡수 범위 +60",
+        "복귀 피해 +50%",
+        "분열탄 +2발",
+      ];
+      // 16 emitters × 4 configurations: each row has a different spread/count/rhythm/range.
+      const FAMILIES = [
+        ["slash", "단검|쌍검|진동도|월광도", "근접,물리", "//", 0.65, 24, 110],
+        [
+          "bolt",
+          "권총|레일피스톨|펄스건|매그넘",
+          "원거리,물리",
+          "+",
+          0.75,
+          22,
+          500,
+        ],
+        [
+          "fan",
+          "산탄총|파편포|유리총|성운산탄",
+          "원거리,분열",
+          "Y",
+          1.3,
+          12,
+          310,
+        ],
+        [
+          "pierce",
+          "창|레일건|광자랜스|궤도관통포",
+          "관통,에너지",
+          "/",
+          1.5,
+          40,
+          600,
+        ],
+        [
+          "burst",
+          "수류탄|박격포|핵캡슐|진공탄",
+          "폭발,원거리",
+          "*",
+          2.1,
+          38,
+          260,
+        ],
+        [
+          "chain",
+          "전기봉|코일|체인라이트닝|폭풍안테나",
+          "전기,연쇄",
+          "Z",
+          1.4,
+          25,
+          240,
+        ],
+        [
+          "pool",
+          "독구름|맹독꽃|산성분수|바이러스웅덩이",
+          "독,설치",
+          "%",
+          2.4,
+          12,
+          190,
+        ],
+        [
+          "orbit",
+          "회전오브|위성링|플라즈마톱|이온고리",
+          "오라,에너지",
+          "◎",
+          1.8,
+          15,
+          95,
+        ],
+        [
+          "return",
+          "부메랑|초승달|자이로블레이드|혜성고리",
+          "부메랑,물리",
+          "C",
+          1.7,
+          25,
+          380,
+        ],
+        [
+          "summon",
+          "비트드론|늑대봇|포격요정|벌떼봇",
+          "소환,원거리",
+          "✧",
+          2.2,
+          18,
+          350,
+        ],
+        [
+          "flame",
+          "화염방사기|플레어|태양분사기|용광로",
+          "화염,원거리",
+          "~",
+          0.9,
+          14,
+          180,
+        ],
+        [
+          "nova",
+          "얼음폭발|서리파동|빙결화환|절대영도",
+          "냉기,폭발",
+          "X",
+          2,
+          26,
+          140,
+        ],
+        [
+          "mine",
+          "지뢰|시간폭탄|자성덫|공명기뢰",
+          "설치,폭발",
+          ":",
+          2.3,
+          48,
+          110,
+        ],
+        [
+          "spiral",
+          "나선탄|은하송곳|스핀레이|소용돌이",
+          "에너지,분열",
+          "*",
+          1.6,
+          16,
+          400,
+        ],
+        ["aura", "방패|충격망|방어막|중력장", "근접,오라", "#", 1.2, 18, 90],
+        ["rain", "독침|우박|불꽃비|전격우", "원거리,관통", "|", 1.8, 23, 450],
+      ];
+      const WEAPONS = [];
+      FAMILIES.forEach((f, fi) =>
+        f[1]
+          .split("|")
+          .forEach((name, v) =>
+            WEAPONS.push({
+              id: fi * 4 + v,
+              name,
+              mode: f[0],
+              tags: f[2].split(","),
+              icon: f[3],
+              cd: f[4] * (1 + v * 0.13),
+              damage: f[5] * (1 + v * 0.16),
+              range: f[6] + v * 18,
+              count: 1 + v,
+              spread: 0.15 + v * 0.22,
+              phase: v * 0.37,
+              color: ["#65ffe0", "#ffcf75", "#ae93ff", "#ff6b95"][v],
+            }),
+          ),
+      );
+      const PASSIVES = [
+        ["magnet", "자석", "흡수 범위 +35"],
+        ["fuel", "연료탱크", "화염 피해 +12%"],
+        ["core", "에너지 코어", "전체 피해 +8%"],
+        ["boots", "서보 부츠", "이동 속도 +8%"],
+        ["armor", "장갑판", "받는 피해 -10%"],
+        ["heart", "재생 모듈", "최대 HP +20, 회복"],
+        ["scope", "스코프", "공격 범위 +12%"],
+        ["clock", "클럭 칩", "공격 주기 -6%"],
+      ];
+      const RECIPES = FAMILIES.map((f, i) => ({
+        base: i * 4,
+        passive: PASSIVES[i % 8][0],
+        name: [
+          "천검폭우",
+          "궤도심판",
+          "유리태풍",
+          "사건지평선",
+          "초신성",
+          "뇌신의왕관",
+          "에덴바이러스",
+          "다이슨스피어",
+          "영겁의혜성",
+          "기계군단",
+          "지옥불",
+          "빙하기",
+          "제로포인트",
+          "은하붕괴",
+          "절대장벽",
+          "독성유성",
+        ][i],
+        mode: FAMILIES[(i + 7) % 16][0],
+      }));
+      const STARTERS = [
+        ["근접전사", 0, "블레이드 증폭 · 피해 +20%", "//"],
+        ["원거리사수", 4, "빠른 손 · 공격 주기 -15%", "+"],
+        ["마법사", 28, "자기장 · 흡수 범위 +45", "◎"],
+        ["소환사", 36, "군단 프로토콜 · 소환수 +1", "✧"],
+        ["탱커", 56, "강화 외골격 · HP +60", "#"],
+      ];
+      const TYPES = [
+        {
+          name: "drone",
+          hp: 30,
+          speed: 64,
+          r: 11,
+          color: "#ff648c",
+          damage: 10,
+          xp: 2,
+        },
+        {
+          name: "mech",
+          hp: 120,
+          speed: 34,
+          r: 19,
+          color: "#ffb65b",
+          damage: 18,
+          xp: 5,
+        },
+        {
+          name: "swarm",
+          hp: 16,
+          speed: 100,
+          r: 7,
+          color: "#d9fc75",
+          damage: 6,
+          xp: 1,
+        },
+        {
+          name: "turret",
+          hp: 80,
+          speed: 18,
+          r: 15,
+          color: "#ad8bff",
+          damage: 12,
+          xp: 4,
+        },
+        {
+          name: "hacker",
+          hp: 65,
+          speed: 48,
+          r: 13,
+          color: "#61c5ff",
+          damage: 9,
+          xp: 4,
+        },
+        {
+          name: "titan",
+          hp: 380,
+          speed: 25,
+          r: 29,
+          color: "#ff5367",
+          damage: 25,
+          xp: 12,
+        },
+      ];
+      class Pool {
+        constructor(n) {
+          this.items = Array.from({ length: n }, () => ({
+            active: false,
+            hit: new Set(),
+          }));
+          this.next = 0;
+        }
+        get() {
+          for (let i = 0; i < this.items.length; i++) {
+            const j = (this.next + i) % this.items.length,
+              o = this.items[j];
+            if (!o.active) {
+              this.next = (j + 1) % this.items.length;
+              o.active = true;
+              o.hit.clear();
+              return o;
+            }
+          }
+          return null;
+        }
+        clear() {
+          for (const o of this.items) o.active = false;
+        }
+        count() {
+          let n = 0;
+          for (const o of this.items) if (o.active) n++;
+          return n;
+        }
+      }
+      const enemies = new Pool(240),
+        shots = new Pool(420),
+        particles = new Pool(220),
+        gems = new Pool(300),
+        zones = new Pool(64),
+        loot = new Pool(16);
+      let W = 390,
+        H = 844,
+        dpr = 1,
+        state = "menu",
+        p = null,
+        time = 0,
+        kills = 0,
+        level = 1,
+        xp = 0,
+        need = 4,
+        slots = 4,
+        inventory = [],
+        passives = {},
+        spawnClock = 0,
+        eliteClock = 25,
+        choices = [],
+        toastTime = 0,
+        frame = 0,
+        fps = 60,
+        last = 0,
+        hudClock = 0,
+        runSeed = 1,
+        rngState = 1,
+        stats = {},
+        audio = null,
+        muted = false;
+      let moveX = 0,
+        moveY = 0,
+        joyId = null,
+        lastX = 0,
+        lastY = -1;
+      const keys = new Set();
+      function random() {
+        rngState = (Math.imul(rngState, 1664525) + 1013904223) >>> 0;
+        return rngState / 4294967296;
+      }
+      function resize() {
+        W = innerWidth;
+        H = innerHeight;
+        dpr = Math.min(devicePixelRatio || 1, 2);
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      addEventListener("resize", resize);
+      resize();
+      function sound(freq = 440, kind = "sine", duration = 0.06) {
+        if (muted) return;
+        try {
+          audio ??= new (window.AudioContext || window.webkitAudioContext)();
+          if (audio.state === "suspended") audio.resume();
+          const o = audio.createOscillator(),
+            g = audio.createGain();
+          o.type = kind;
+          o.frequency.setValueAtTime(freq, audio.currentTime);
+          o.frequency.exponentialRampToValueAtTime(
+            freq * 0.5,
+            audio.currentTime + duration,
+          );
+          g.gain.setValueAtTime(0.035, audio.currentTime);
+          g.gain.exponentialRampToValueAtTime(
+            0.001,
+            audio.currentTime + duration,
+          );
+          o.connect(g).connect(audio.destination);
+          o.start();
+          o.stop(audio.currentTime + duration);
+        } catch {}
+      }
+      function announce(t) {
+        $("toast").textContent = t;
+        toastTime = 2.6;
+      }
+      let tagArray = null,
+        tagLength = -1,
+        tagCache = {};
+      function counts() {
+        if (tagArray === inventory && tagLength === inventory.length)
+          return tagCache;
+        const c = {};
+        for (const w of inventory)
+          for (const t of WEAPONS[w.id].tags) c[t] = (c[t] || 0) + 1;
+        tagArray = inventory;
+        tagLength = inventory.length;
+        tagCache = c;
+        return c;
+      }
+      function has(t, n = 5) {
+        return (counts()[t] || 0) >= n;
+      }
+      function damage(w) {
+        let mult = 1;
+        for (const t of WEAPONS[w.id].tags) if (has(t, 3)) mult += 0.2;
+        return (
+          WEAPONS[w.id].damage *
+          (1 + (w.lv - 1) * 0.23) *
+          Math.pow(1.45, w.tier) *
+          (w.evolved ? 2.2 : 1) *
+          mult *
+          (1 + (passives.core || 0) * 0.08) *
+          (p.arch === 0 ? 1.2 : 1) *
+          (WEAPONS[w.id].tags.includes("화염")
+            ? 1 + (passives.fuel || 0) * 0.12
+            : 1)
+        );
+      }
+      function reset(arch) {
+        runSeed = Date.now() >>> 0;
+        rngState = runSeed;
+        for (const pool of [enemies, shots, particles, gems, zones, loot])
+          pool.clear();
+        time = 0;
+        kills = 0;
+        level = 1;
+        xp = 0;
+        need = 4;
+        slots = 4;
+        inventory = [
+          { id: STARTERS[arch][1], lv: 1, tier: 0, cd: 0.1, evolved: false },
+        ];
+        passives = {};
+        spawnClock = 0;
+        eliteClock = 25;
+        stats = {
+          shots: 0,
+          damage: 0,
+          choices: 0,
+          dashes: 0,
+          chests: 0,
+          peakEnemies: 0,
+        };
+        p = {
+          x: 0,
+          y: 0,
+          hp: arch === 4 ? 160 : 100,
+          maxHp: arch === 4 ? 160 : 100,
+          arch,
+          inv: 0,
+          dash: 0,
+          dashTime: 0,
+        };
+        state = "playing";
+        close();
+        release();
+        $("hint").style.display = "block";
+        sound(520);
+        updateHud(); // Guided first encounter and nearby XP: first upgrade in <= 4 s even without movement.
+        for (let i = 0; i < 4; i++)
+          gem(Math.cos(i * 1.57) * 25, Math.sin(i * 1.57) * 25, 1);
+      }
+      function close() {
+        $("overlay").classList.add("hidden");
+      }
+      function panel(html) {
+        $("panel").innerHTML = html;
+        $("overlay").classList.remove("hidden");
+      }
+      function menu() {
+        state = "menu";
+        panel(
+          '<div class="eyebrow">SURVIVAL / BUILD / EVOLVE</div><h1>NEON<br><span class="accent">FOUNDRY</span></h1><p>무기를 조합해 나만의 빌드를 만들고,<br>쏟아지는 적을 쓸어버린다.</p><div class="row"><span class="chip">240초 탈출 프로토콜</span><span>64 무기 · 16 진화</span></div><div class="cards starters">' +
+            STARTERS.map(
+              (s, i) =>
+                '<button class="card" data-start="' +
+                i +
+                '"><span class="glyph">' +
+                s[3] +
+                "</span><span><b>" +
+                s[0] +
+                "</b><small>" +
+                WEAPONS[s[1]].name +
+                " / " +
+                s[2] +
+                "</small></span></button>",
+            ).join("") +
+            '</div><div class="row"><button data-codex="1">무기 아카이브 ↗</button><button data-mute="1">사운드 ' +
+            (muted ? "OFF" : "ON") +
+            '</button></div><div class="foot">이동 ⊕ / 자동 공격 / 대시 ↗ · PC: WASD / SPACE / ESC</div>',
+        );
+      }
+      function codex() {
+        panel(
+          '<div class="eyebrow">ARSENAL DATABASE</div><h2>64개 무기 / 16개 진화</h2><p>동일 무기 2개를 융합하면 티어 +1. 레벨은 높은 쪽 유지.<br>Lv8 + 아래 재료 + 정예 상자 → 진화 (별도 슬롯 불필요)</p>' +
+            RECIPES.map(
+              (r) =>
+                '<div class="recipe"><b>' +
+                WEAPONS[r.base].name +
+                "</b> Lv8 + " +
+                PASSIVES.find((a) => a[0] === r.passive)[1] +
+                ' → <span class="chip">' +
+                r.name +
+                "</span></div>",
+            ).join("") +
+            "<p>" +
+            WEAPONS.map((w) => w.name + " [" + w.tags.join("·") + "]").join(
+              " / ",
+            ) +
+            '</p><button data-menu="1">← 돌아가기</button>',
+        );
+      }
+      function offerWeight(w) {
+        const c = counts();
+        return 1 + w.tags.reduce((n, t) => n + (c[t] || 0) * 1.5, 0);
+      }
+      function pickWeighted(list, weight) {
+        let total = list.reduce((n, a) => n + weight(a), 0),
+          r = random() * total;
+        for (const a of list) {
+          r -= weight(a);
+          if (r <= 0) return a;
+        }
+        return list[list.length - 1];
+      }
+      function makeChoices() {
+        const list = [];
+        for (let i = 0; i < inventory.length; i++) {
+          const w = inventory[i];
+          if (w.lv < 8)
+            list.push({
+              kind: "upgrade",
+              index: i,
+              id: w.id,
+              title: WEAPONS[w.id].name + " Lv" + (w.lv + 1),
+              desc: "피해 +23% · Lv8에서 진화 가능",
+              weight: 5 + offerWeight(WEAPONS[w.id]),
+            });
+        }
+        if (inventory.length < slots)
+          for (const w of WEAPONS)
+            list.push({
+              kind: "weapon",
+              id: w.id,
+              title: w.name,
+              desc:
+                w.tags.join(" · ") +
+                " / " +
+                (inventory.some((a) => a.id === w.id)
+                  ? "동일 무기 · 융합 가능"
+                  : "신규 무기"),
+              weight: offerWeight(w),
+            });
+        for (const a of PASSIVES)
+          if ((passives[a[0]] || 0) < 5)
+            list.push({
+              kind: "passive",
+              id: a[0],
+              title: a[1] + " Lv" + ((passives[a[0]] || 0) + 1),
+              desc:
+                a[2] +
+                (RECIPES.some(
+                  (r) =>
+                    r.passive === a[0] &&
+                    inventory.some((w) => w.id === r.base),
+                )
+                  ? " · 보유 무기 진화 재료"
+                  : ""),
+              weight: RECIPES.some(
+                (r) =>
+                  r.passive === a[0] && inventory.some((w) => w.id === r.base),
+              )
+                ? 12
+                : 4,
+            });
+        if (slots < 8)
+          list.push({
+            kind: "slot",
+            title: "확장 슬롯 " + (slots + 1) + "/8",
+            desc: "무기를 하나 더 장착",
+            weight: inventory.length === slots ? 30 : 3,
+          });
+        const out = [];
+        while (out.length < 4 && list.length) {
+          const a = pickWeighted(list, (x) => x.weight);
+          out.push(a);
+          list.splice(list.indexOf(a), 1);
+        }
+        return out;
+      }
+      function levelUp() {
+        state = "levelup";
+        release();
+        choices = makeChoices();
+        sound(880, "triangle", 0.2);
+        panel(
+          '<div class="eyebrow">SYSTEM UPGRADE / LV ' +
+            level +
+            '</div><h2>빌드를 확장하세요</h2><p>같은 태그 3개: 피해 +20% · 5개: 특수 효과</p><div class="cards">' +
+            choices
+              .map(
+                (a, i) =>
+                  '<button class="card" data-choice="' +
+                  i +
+                  '"><span class="glyph">' +
+                  (a.kind === "weapon" ? WEAPONS[a.id].icon : "＋") +
+                  "</span><span><b>" +
+                  a.title +
+                  "</b><small>" +
+                  a.desc +
+                  "</small></span></button>",
+              )
+              .join("") +
+            "</div>",
+        );
+      }
+      function applyChoice(i) {
+        if (state !== "levelup" || !choices[i]) return;
+        const a = choices[i];
+        if (a.kind === "weapon")
+          inventory.push({ id: a.id, lv: 1, tier: 0, cd: 0.2, evolved: false });
+        if (a.kind === "upgrade") inventory[a.index].lv++;
+        if (a.kind === "slot") slots++;
+        if (a.kind === "passive") {
+          passives[a.id] = (passives[a.id] || 0) + 1;
+          if (a.id === "heart") {
+            p.maxHp += 20;
+            p.hp = Math.min(p.maxHp, p.hp + 40);
+          }
+        }
+        stats.choices++;
+        choices = [];
+        state = "playing";
+        close();
+        updateHud();
+        checkLevel();
+      }
+      function checkLevel() {
+        if (state === "playing" && xp >= need) {
+          xp -= need;
+          level++;
+          need = Math.floor(6 + level * 3.2);
+          levelUp();
+        }
+      }
+      function fuse(i, j) {
+        const a = inventory[i],
+          b = inventory[j];
+        if (
+          !a ||
+          !b ||
+          i === j ||
+          a.id !== b.id ||
+          a.tier !== b.tier ||
+          a.tier >= 4 ||
+          a.evolved ||
+          b.evolved
+        )
+          return false;
+        a.tier++;
+        a.lv = Math.max(a.lv, b.lv);
+        inventory.splice(j, 1);
+        announce(
+          "융합 성공 · " +
+            ["Common", "Uncommon", "Rare", "Legendary", "Mythic"][a.tier],
+        );
+        return true;
+      }
+      function pause() {
+        if (!["playing", "paused"].includes(state)) return;
+        if (state === "paused") {
+          state = "playing";
+          close();
+          return;
+        }
+        state = "paused";
+        release();
+        const pairs = [];
+        for (let i = 0; i < inventory.length; i++)
+          for (let j = i + 1; j < inventory.length; j++)
+            if (
+              inventory[i].id === inventory[j].id &&
+              inventory[i].tier === inventory[j].tier &&
+              inventory[i].tier < 4 &&
+              !inventory[i].evolved &&
+              !inventory[j].evolved
+            )
+              pairs.push([i, j]);
+        panel(
+          '<div class="eyebrow">PROTOCOL SUSPENDED</div><h2>일시정지 / 빌드 관리</h2><p>슬롯 ' +
+            inventory.length +
+            "/" +
+            slots +
+            " · 같은 태그는 중복 무기도 집계합니다.</p>" +
+            inventory
+              .map(
+                (w) =>
+                  '<div class="recipe">' +
+                  weaponName(w) +
+                  " Lv" +
+                  w.lv +
+                  " · " +
+                  ["Common", "Uncommon", "Rare", "Legendary", "Mythic"][
+                    w.tier
+                  ] +
+                  "</div>",
+              )
+              .join("") +
+            '<div class="cards">' +
+            pairs
+              .map(
+                ([i, j]) =>
+                  '<button data-fuse="' +
+                  i +
+                  "," +
+                  j +
+                  '">' +
+                  WEAPONS[inventory[i].id].name +
+                  " ×2 융합 ↑</button>",
+              )
+              .join("") +
+            '</div><div class="row"><button class="primary" data-resume="1">계속하기</button><button data-restart="1">재시작</button><button data-mute="1">사운드 ' +
+            (muted ? "OFF" : "ON") +
+            "</button></div>",
+        );
+      }
+      function weaponName(w) {
+        return w.evolved
+          ? RECIPES.find((r) => r.base === w.id).name
+          : WEAPONS[w.id].name;
+      }
+      function end(win) {
+        state = win ? "victory" : "gameover";
+        release();
+        sound(win ? 1040 : 120, "sawtooth", 0.4);
+        panel(
+          '<div class="eyebrow">' +
+            (win ? "EXTRACTION COMPLETE" : "SIGNAL LOST") +
+            "</div><h1>" +
+            (win ? "VICTORY" : "GAME<br>OVER") +
+            "</h1><p>" +
+            Math.floor(time) +
+            "초 생존 · " +
+            kills +
+            " 처치 · LV " +
+            level +
+            "<br>" +
+            stats.choices +
+            "회 업그레이드 / " +
+            stats.dashes +
+            '회 대시</p><div class="row"><button class="primary" data-restart="1">재시작</button><button data-menu="1">아키타입 선택</button></div>',
+        );
+      }
+      function gem(x, y, value) {
+        let g = gems.get();
+        if (!g) {
+          // conserve XP when pool is saturated
+          for (const a of gems.items)
+            if (a.active) {
+              a.value += value;
+              return;
+            }
+          return;
+        }
+        Object.assign(g, { x, y, value });
+      }
+      function spark(x, y, color, n = 5) {
+        for (let i = 0; i < n; i++) {
+          const o = particles.get();
+          if (!o) break;
+          const a = random() * Math.PI * 2;
+          Object.assign(o, {
+            x,
+            y,
+            vx: Math.cos(a) * 80,
+            vy: Math.sin(a) * 80,
+            life: 0.35,
+            max: 0.35,
+            color,
+          });
+        }
+      }
+      function spawn(elite = false) {
+        const e = enemies.get();
+        if (!e) return;
+        const a = random() * Math.PI * 2,
+          r = Math.hypot(W, H) * 0.55 + 70;
+        const type = elite
+          ? 5
+          : time < 12
+            ? 0
+            : Math.floor(random() * Math.min(6, 2 + Math.floor(time / 25)));
+        const t = TYPES[type];
+        Object.assign(e, {
+          x: p.x + Math.cos(a) * r,
+          y: p.y + Math.sin(a) * r,
+          hp: t.hp * (1 + time / 150) * (elite ? 3 : 1),
+          maxHp: t.hp * (1 + time / 150) * (elite ? 3 : 1),
+          type,
+          r: t.r * (elite ? 1.4 : 1),
+          speed: t.speed,
+          elite,
+          slow: 0,
+          poison: 0,
+          burn: 0,
+          tick: 0,
+          cd: 1,
+          stamp: ++frame,
+        });
+        stats.peakEnemies = Math.max(stats.peakEnemies, enemies.count());
+      }
+      function nearest(x, y, range = 1e9, exclude = null) {
+        let best = null,
+          d = range * range;
+        for (const e of enemies.items)
+          if (e.active && (!exclude || !exclude.has(e.stamp))) {
+            const dd = (e.x - x) ** 2 + (e.y - y) ** 2;
+            if (dd < d) {
+              d = dd;
+              best = e;
+            }
+          }
+        return best;
+      }
+      function hit(e, d, w, secondary = false) {
+        if (!e.active) return;
+        const tags = WEAPONS[w.id].tags;
+        let dmg = d;
+        if (tags.includes("물리") && has("물리") && random() < 0.25) dmg *= 2;
+        e.hp -= dmg;
+        stats.damage += dmg;
+        if (tags.includes("독")) {
+          e.poison = has("독") ? 5 : 3;
+          e.dot = d * 0.24;
+          e.dotW = w;
+        }
+        if (tags.includes("화염")) {
+          e.burn = 2;
+          e.dot = d * 0.24;
+          e.dotW = w;
+        }
+        if (tags.includes("냉기")) e.slow = 2;
+        spark(e.x, e.y, WEAPONS[w.id].color, 2);
+        if (e.hp <= 0) kill(e, w, secondary);
+      }
+      function kill(e, w, secondary) {
+        if (!e.active) return;
+        e.active = false;
+        kills++;
+        gem(e.x, e.y, TYPES[e.type].xp * (e.elite ? 5 : 1));
+        if (e.elite) {
+          const box = loot.get();
+          if (box) Object.assign(box, { x: e.x, y: e.y });
+        }
+        if (!secondary && has("화염") && WEAPONS[w.id].tags.includes("화염"))
+          blast(e.x, e.y, 60, damage(w) * 0.4, w, true);
+      }
+      function blast(x, y, r, d, w, secondary = false) {
+        r *= has("폭발") ? 1.3 : 1;
+        const z = zones.get();
+        if (z)
+          Object.assign(z, {
+            x,
+            y,
+            r,
+            life: 0.22,
+            max: 0.22,
+            cd: 99,
+            d: 0,
+            w,
+            color: WEAPONS[w.id].color,
+            kind: "flash",
+          });
+        for (const e of enemies.items)
+          if (e.active && (e.x - x) ** 2 + (e.y - y) ** 2 < (r + e.r) ** 2)
+            hit(e, d, w, secondary);
+      }
+      function zone(x, y, r, d, life, w, kind) {
+        const z = zones.get();
+        if (!z) return;
+        Object.assign(z, {
+          x,
+          y,
+          r,
+          d,
+          life,
+          max: life,
+          cd: 0,
+          w,
+          color: WEAPONS[w.id].color,
+          kind,
+        });
+      }
+      function projectile(
+        x,
+        y,
+        a,
+        speed,
+        d,
+        w,
+        kind = "bolt",
+        life = 1.6,
+        r = 5,
+        pierce = 0,
+      ) {
+        const b = shots.get();
+        if (!b) return;
+        Object.assign(b, {
+          x,
+          y,
+          ox: x,
+          oy: y,
+          vx: Math.cos(a) * speed,
+          vy: Math.sin(a) * speed,
+          a,
+          age: 0,
+          life,
+          r,
+          d,
+          w,
+          kind,
+          pierce: pierce + (has("관통") ? 2 : 0),
+          color: WEAPONS[w.id].color,
+        });
+        stats.shots++;
+      }
+      function fire(w) {
+        const def = WEAPONS[w.id],
+          mode = w.evolved
+            ? RECIPES.find((r) => r.base === w.id).mode
+            : def.mode;
+        const target = nearest(
+          p.x,
+          p.y,
+          def.range * (1 + (passives.scope || 0) * 0.12) + 200,
+        );
+        const a = target
+            ? Math.atan2(target.y - p.y, target.x - p.x)
+            : Math.atan2(lastY, lastX),
+          d = damage(w),
+          count = w.evolved ? def.count * 2 + 2 : def.count,
+          r = def.range * (w.evolved ? 1.4 : 1),
+          spread = def.spread;
+        let tx = target ? target.x : p.x + Math.cos(a) * 120,
+          ty = target ? target.y : p.y + Math.sin(a) * 120;
+        const speed = has("원거리") ? 420 : 325;
+        switch (mode) {
+          case "slash":
+            for (let i = 0; i < count; i++) {
+              const angle = a + (i - (count - 1) / 2) * spread;
+              zone(
+                p.x + Math.cos(angle) * r * 0.45,
+                p.y + Math.sin(angle) * r * 0.45,
+                r * 0.65 * (has("근접") ? 1.3 : 1),
+                d,
+                0.18,
+                w,
+                "slash",
+              );
+            }
+            break;
+          case "bolt":
+            for (let i = 0; i < count; i++)
+              projectile(
+                p.x,
+                p.y,
+                a + (i - (count - 1) / 2) * spread * 0.3,
+                speed,
+                d,
+                w,
+                "bolt",
+                1.7,
+                4,
+              );
+            break;
+          case "fan":
+            for (let i = 0; i < 4 + count * 2; i++)
+              projectile(
+                p.x,
+                p.y,
+                a + (i - (3 + count * 2) / 2) * spread * 0.24,
+                speed,
+                d,
+                w,
+                "bolt",
+                0.65 + count * 0.1,
+                3,
+              );
+            break;
+          case "pierce":
+            for (let i = 0; i < count; i++)
+              projectile(p.x, p.y, a + i * 0.08, 580, d, w, "beam", 1.2, 5, 5);
+            break;
+          case "burst":
+            for (let i = 0; i < count; i++) {
+              const an = a + (i - (count - 1) / 2) * spread;
+              projectile(p.x, p.y, an, 220, d, w, "bomb", 0.75 + i * 0.12, 7);
+            }
+            break;
+          case "chain": {
+            let e = target,
+              px = p.x,
+              py = p.y;
+            const seen = new Set();
+            for (let i = 0; i < 2 + count + (has("전기") ? 1 : 0); i++) {
+              if (!e) break;
+              seen.add(e.stamp);
+              const z = zones.get();
+              if (z)
+                Object.assign(z, {
+                  x: px,
+                  y: py,
+                  x2: e.x,
+                  y2: e.y,
+                  r: 0,
+                  d: 0,
+                  life: 0.18,
+                  max: 0.18,
+                  cd: 99,
+                  w,
+                  color: "#8be7ff",
+                  kind: "line",
+                });
+              px = e.x;
+              py = e.y;
+              hit(e, d, w);
+              e = nearest(px, py, has("연쇄") ? 240 : 170, seen);
+            }
+            break;
+          }
+          case "pool":
+            for (let i = 0; i < count; i++)
+              zone(
+                tx + Math.cos(i * 2.4) * i * 25,
+                ty + Math.sin(i * 2.4) * i * 25,
+                65 + count * 5,
+                d,
+                3 + (has("설치") ? 1.5 : 0),
+                w,
+                "pool",
+              );
+            break;
+          case "orbit":
+            for (let i = 0; i < count + 1; i++) {
+              projectile(
+                p.x,
+                p.y,
+                (i * Math.PI * 2) / (count + 1),
+                0,
+                d,
+                w,
+                "orbit",
+                2,
+                10,
+                99,
+              );
+            }
+            break;
+          case "return":
+            for (let i = 0; i < count; i++)
+              projectile(
+                p.x,
+                p.y,
+                a + i * spread,
+                250,
+                d,
+                w,
+                "return",
+                2,
+                11,
+                5,
+              );
+            break;
+          case "summon":
+            for (
+              let i = 0;
+              i < count + (p.arch === 3 ? 1 : 0) + (has("소환") ? 1 : 0);
+              i++
+            )
+              projectile(
+                p.x + Math.cos(i * 2.4) * 55,
+                p.y + Math.sin(i * 2.4) * 55,
+                a,
+                160,
+                d,
+                w,
+                "drone",
+                2.8,
+                8,
+                8,
+              );
+            break;
+          case "flame":
+            for (let i = 0; i < 3 + count; i++)
+              projectile(
+                p.x,
+                p.y,
+                a + (i - (2 + count) / 2) * spread * 0.35,
+                180,
+                d,
+                w,
+                "flame",
+                0.7 + count * 0.07,
+                12,
+                2,
+              );
+            break;
+          case "nova":
+            blast(p.x, p.y, r, d, w);
+            for (let i = 0; i < count * 3; i++)
+              projectile(
+                p.x,
+                p.y,
+                (i * Math.PI * 2) / (count * 3),
+                180,
+                d * 0.4,
+                w,
+                "bolt",
+                0.8,
+                4,
+              );
+            break;
+          case "mine":
+            for (let i = 0; i < count; i++)
+              zone(
+                p.x + Math.cos(a + i * 2.4) * 40,
+                p.y + Math.sin(a + i * 2.4) * 40,
+                50 + count * 4,
+                d,
+                5 * (has("설치") ? 1.5 : 1),
+                w,
+                "mine",
+              );
+            break;
+          case "spiral":
+            for (let i = 0; i < 3 + count * 2; i++)
+              projectile(
+                p.x,
+                p.y,
+                (i * Math.PI * 2) / (3 + count * 2) + time,
+                230,
+                d,
+                w,
+                "spiral",
+                1.7,
+                5,
+                1,
+              );
+            break;
+          case "aura":
+            zone(p.x, p.y, r, d, 0.45 + count * 0.12, w, "aura");
+            break;
+          case "rain":
+            for (let i = 0; i < count + 2; i++)
+              projectile(
+                tx + (i - (count + 1) / 2) * 38,
+                ty - 200 - i * 20,
+                Math.PI / 2,
+                400,
+                d,
+                w,
+                "bolt",
+                1,
+                5,
+                2,
+              );
+            break;
+        }
+        if (random() < 0.18) sound(220 + def.id * 12, "triangle", 0.035);
+      }
+      function collectBox(box) {
+        box.active = false;
+        stats.chests++;
+        const w = inventory.find(
+          (w) =>
+            !w.evolved &&
+            w.lv >= 8 &&
+            RECIPES.some(
+              (r) => r.base === w.id && (passives[r.passive] || 0) >= 1,
+            ),
+        );
+        if (w) {
+          w.evolved = true;
+          announce("진화 / " + weaponName(w));
+          sound(1200, "sawtooth", 0.25);
+        } else {
+          p.hp = Math.min(p.maxHp, p.hp + 30);
+          xp += 15;
+          announce("정예 상자 · HP +30 / XP +15 · 진화 조건 미충족");
+        }
+      }
+      function dash() {
+        if (state !== "playing" || p.dash > 0) return;
+        p.dash = 3;
+        p.dashTime = 0.2;
+        p.inv = 0.35;
+        stats.dashes++;
+        sound(180, "sawtooth", 0.12);
+      }
+      function release() {
+        moveX = moveY = 0;
+        joyId = null;
+        keys.clear();
+        $("stick").style.transform = "translate(0,0)";
+      }
+      function update(dt) {
+        if (state !== "playing") return;
+        time = Math.min(240, time + dt);
+        if (time >= 240) {
+          end(true);
+          return;
+        }
+        p.inv = Math.max(0, p.inv - dt);
+        p.dash = Math.max(0, p.dash - dt);
+        p.dashTime = Math.max(0, p.dashTime - dt);
+        let mx =
+            moveX +
+            (keys.has("d") || keys.has("ArrowRight") ? 1 : 0) -
+            (keys.has("a") || keys.has("ArrowLeft") ? 1 : 0),
+          my =
+            moveY +
+            (keys.has("s") || keys.has("ArrowDown") ? 1 : 0) -
+            (keys.has("w") || keys.has("ArrowUp") ? 1 : 0);
+        let len = Math.hypot(mx, my);
+        if (len > 1) {
+          mx /= len;
+          my /= len;
+        }
+        if (len > 0.1) {
+          lastX = mx / (len > 1 ? 1 : len);
+          lastY = my / (len > 1 ? 1 : len);
+        }
+        if (p.dashTime > 0) {
+          mx = lastX * 3.5;
+          my = lastY * 3.5;
+        }
+        sparkMove(dt);
+        p.x += mx * 155 * (1 + (passives.boots || 0) * 0.08) * dt;
+        p.y += my * 155 * (1 + (passives.boots || 0) * 0.08) * dt;
+        spawnClock -= dt;
+        let guard = 0;
+        while (spawnClock <= 0 && guard++ < 8) {
+          spawn();
+          spawnClock += Math.max(0.12, 0.85 - time * 0.003);
+        }
+        eliteClock -= dt;
+        if (eliteClock <= 0) {
+          spawn(true);
+          eliteClock = 25;
+        }
+        for (const w of inventory) {
+          w.cd -= dt;
+          if (w.cd <= 0) {
+            fire(w);
+            w.cd =
+              (WEAPONS[w.id].cd / (1 + (w.lv - 1) * 0.035)) *
+              (1 - (passives.clock || 0) * 0.06) *
+              (p.arch === 1 ? 0.85 : 1) *
+              (has("에너지") ? 0.85 : 1);
+          }
+        }
+        for (const e of enemies.items) {
+          if (!e.active) continue;
+          const t = TYPES[e.type];
+          e.slow = Math.max(0, e.slow - dt);
+          e.poison = Math.max(0, e.poison - dt);
+          e.burn = Math.max(0, e.burn - dt);
+          if (e.poison > 0 || e.burn > 0) {
+            e.hp -= (e.dot || 3) * dt;
+            if (e.hp <= 0) {
+              kill(e, e.dotW || inventory[0], false);
+              continue;
+            }
+          }
+          let dx = p.x - e.x,
+            dy = p.y - e.y,
+            dist = Math.hypot(dx, dy) || 1;
+          let slow = e.slow > 0 ? (has("냉기") ? 0.35 : 0.65) : 1;
+          if (e.type !== 3 || dist > 260) {
+            e.x += (dx / dist) * e.speed * slow * dt;
+            e.y += (dy / dist) * e.speed * slow * dt;
+          }
+          if (dist > 1400) {
+            e.x = p.x + (dx / dist) * -600;
+            e.y = p.y + (dy / dist) * -600;
+          }
+          e.cd -= dt;
+          if ((e.type === 3 || e.type === 4) && e.cd <= 0 && dist < 480) {
+            const b = shots.get();
+            if (b)
+              Object.assign(b, {
+                x: e.x,
+                y: e.y,
+                vx: (dx / dist) * 130,
+                vy: (dy / dist) * 130,
+                life: 4,
+                age: 0,
+                r: 6,
+                kind: "hostile",
+                d: t.damage,
+                color: t.color,
+              });
+            e.cd = e.type === 4 ? 2.4 : 1.8;
+          }
+          if (dist < e.r + 12 && p.inv <= 0) {
+            hurt(t.damage);
+            e.x -= (dx / dist) * 20;
+            e.y -= (dy / dist) * 20;
+          }
+        }
+        for (const b of shots.items) {
+          if (!b.active) continue;
+          b.life -= dt;
+          b.age += dt;
+          if (b.life <= 0) {
+            if (b.kind === "bomb") blast(b.x, b.y, 65 + b.w.lv * 2, b.d, b.w);
+            b.active = false;
+            continue;
+          }
+          if (b.kind === "orbit") {
+            const r = WEAPONS[b.w.id].range;
+            b.x = p.x + Math.cos(b.a + b.age * 3) * r;
+            b.y = p.y + Math.sin(b.a + b.age * 3) * r;
+          } else {
+            if (b.kind === "return" && b.age > 0.75) {
+              const dx = p.x - b.x,
+                dy = p.y - b.y,
+                dd = Math.hypot(dx, dy) || 1;
+              b.vx = (dx / dd) * 300;
+              b.vy = (dy / dd) * 300;
+              if (dd < 15) {
+                b.active = false;
+                continue;
+              }
+            }
+            if (b.kind === "spiral") {
+              const a = dt * 2,
+                vx = b.vx;
+              b.vx = vx * Math.cos(a) - b.vy * Math.sin(a);
+              b.vy = vx * Math.sin(a) + b.vy * Math.cos(a);
+            }
+            if (b.kind === "drone") {
+              const e = nearest(b.x, b.y);
+              if (e) {
+                const a = Math.atan2(e.y - b.y, e.x - b.x);
+                b.vx = Math.cos(a) * 220;
+                b.vy = Math.sin(a) * 220;
+              }
+            }
+            b.x += b.vx * dt;
+            b.y += b.vy * dt;
+          }
+          if (b.kind === "hostile") {
+            if ((b.x - p.x) ** 2 + (b.y - p.y) ** 2 < 300) {
+              if (p.inv <= 0) hurt(b.d);
+              b.active = false;
+            }
+            continue;
+          }
+          if (b.kind === "bomb") continue;
+          for (const e of enemies.items) {
+            if (!e.active || b.hit.has(e.stamp)) continue;
+            if ((e.x - b.x) ** 2 + (e.y - b.y) ** 2 < (e.r + b.r) ** 2) {
+              b.hit.add(e.stamp);
+              hit(
+                e,
+                b.d *
+                  (b.kind === "return" && b.age > 0.75 && has("부메랑")
+                    ? 1.5
+                    : 1),
+                b.w,
+              );
+              if (has("분열") && b.kind === "bolt") {
+                for (let i = 0; i < 2; i++)
+                  projectile(
+                    b.x,
+                    b.y,
+                    b.a + (i ? 1 : -1) * 0.8,
+                    200,
+                    b.d * 0.35,
+                    b.w,
+                    "shard",
+                    0.5,
+                    3,
+                  );
+              }
+              if (b.pierce-- <= 0) {
+                b.active = false;
+                break;
+              }
+            }
+          }
+        }
+        for (const z of zones.items) {
+          if (!z.active) continue;
+          z.life -= dt;
+          if (z.life <= 0) {
+            z.active = false;
+            continue;
+          }
+          if (z.kind === "aura") {
+            z.x = p.x;
+            z.y = p.y;
+          }
+          z.cd -= dt;
+          if (z.cd <= 0 && z.d > 0) {
+            let touched = false;
+            for (const e of enemies.items)
+              if (
+                e.active &&
+                (e.x - z.x) ** 2 + (e.y - z.y) ** 2 < (e.r + z.r) ** 2
+              ) {
+                hit(e, z.d, z.w);
+                touched = true;
+              }
+            z.cd = 0.5;
+            if (z.kind === "mine" && touched) {
+              blast(z.x, z.y, z.r * 1.5, z.d, z.w);
+              z.active = false;
+            }
+          }
+        }
+        const magnet =
+          75 +
+          (passives.magnet || 0) * 35 +
+          (p.arch === 2 ? 45 : 0) +
+          (has("오라") ? 60 : 0);
+        for (const g of gems.items) {
+          if (!g.active) continue;
+          let dx = p.x - g.x,
+            dy = p.y - g.y,
+            dist = Math.hypot(dx, dy);
+          if (dist < magnet) {
+            if (dist < 18) {
+              g.active = false;
+              xp += g.value;
+            } else {
+              g.x += (dx / (dist || 1)) * 420 * dt;
+              g.y += (dy / (dist || 1)) * 420 * dt;
+            }
+          }
+        }
+        for (const box of loot.items)
+          if (box.active && Math.hypot(box.x - p.x, box.y - p.y) < 55)
+            collectBox(box);
+        for (const o of particles.items)
+          if (o.active) {
+            o.life -= dt;
+            o.x += o.vx * dt;
+            o.y += o.vy * dt;
+            if (o.life <= 0) o.active = false;
+          }
+        if (toastTime > 0) {
+          toastTime -= dt;
+          if (toastTime <= 0) $("toast").textContent = "";
+        }
+        if (time > 5) $("hint").style.display = "none";
+        if (state === "playing") checkLevel();
+      }
+      function sparkMove(dt) {
+        if (p.dashTime > 0 && random() < dt * 50) spark(p.x, p.y, "#65ffe0", 2);
+      }
+      function hurt(d) {
+        p.hp = Math.max(
+          0,
+          p.hp + d * -Math.max(0.4, 1 - (passives.armor || 0) * 0.1),
+        );
+        p.inv = 0.7;
+        spark(p.x, p.y, "#ff648c", 9);
+        sound(90, "square", 0.08);
+        if (p.hp <= 0) end(false);
+      }
+      function updateHud() {
+        if (!p) return;
+        const remaining = Math.ceil(240 - time);
+        $("timer").textContent =
+          String(Math.floor(remaining / 60)).padStart(2, "0") +
+          ":" +
+          String(remaining % 60).padStart(2, "0");
+        $("hpbar").style.width = (p.hp / p.maxHp) * 100 + "%";
+        $("xpbar").style.width = Math.min(100, (xp / need) * 100) + "%";
+        $("health").textContent = Math.ceil(p.hp) + " / " + p.maxHp + " HP";
+        $("level").textContent = "LV " + level + " · " + xp + "/" + need;
+        $("kills").textContent = kills + " KILLS";
+        $("fps").textContent = Math.round(fps) + " FPS";
+        $("dash").querySelector("span").textContent =
+          p.dash > 0 ? p.dash.toFixed(1) + "s" : "대시";
+        $("dash").style.background =
+          "conic-gradient(#65ffe035 " +
+          (1 - p.dash / 3) * 360 +
+          "deg,#101c30 0deg)";
+        const c = counts();
+        $("synergies").innerHTML = Object.entries(c)
+          .filter(([t, n]) => n >= 3)
+          .map(
+            ([t, n]) =>
+              '<span class="tag" title="' +
+              EFFECTS[TAGS.indexOf(t)] +
+              '">' +
+              TAG_ICONS[TAGS.indexOf(t)] +
+              " " +
+              t +
+              " " +
+              n +
+              " · +20%" +
+              (n >= 5 ? " / " + EFFECTS[TAGS.indexOf(t)] : "") +
+              "</span>",
+          )
+          .join("");
+        $("build").style.top =
+          $("hud").getBoundingClientRect().bottom + 10 + "px";
+        $("build").innerHTML =
+          inventory
+            .map(
+              (w) =>
+                '<span class="slot">' +
+                WEAPONS[w.id].icon +
+                " " +
+                weaponName(w) +
+                " <b>" +
+                w.lv +
+                "</b>" +
+                (w.tier ? " ★" + w.tier : "") +
+                "</span>",
+            )
+            .join("") +
+          '<span class="slot">' +
+          inventory.length +
+          "/" +
+          slots +
+          "</span>";
+      }
+      function render() {
+        ctx.fillStyle = "#080e1b";
+        ctx.fillRect(0, 0, W, H);
+        const px = p ? p.x : time * 10,
+          py = p ? p.y : 0;
+        ctx.strokeStyle = "#17283c";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let x = (((W / 2 - px) % 64) + 64) % 64; x < W; x += 64) {
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, H);
+        }
+        for (let y = (((H / 2 - py) % 64) + 64) % 64; y < H; y += 64) {
+          ctx.moveTo(0, y);
+          ctx.lineTo(W, y);
+        }
+        ctx.stroke();
+        ctx.fillStyle = "#386374";
+        for (let i = 0; i < 24; i++) {
+          const x = (((i * 173 - px * 0.3) % W) + W) % W,
+            y = (((i * 239 - py * 0.3 - last * 0.008) % H) + H) % H;
+          ctx.globalAlpha = 0.15 + (i % 3) * 0.08;
+          ctx.fillRect(x, y, 2, 7);
+        }
+        ctx.globalAlpha = 1;
+        if (!p) return;
+        ctx.save();
+        ctx.translate(W / 2 - p.x, H / 2 - p.y);
+        for (const z of zones.items)
+          if (z.active) {
+            ctx.globalAlpha = Math.min(0.28, (z.life / z.max) * 0.3);
+            ctx.fillStyle = z.color;
+            ctx.strokeStyle = z.color;
+            ctx.beginPath();
+            if (z.kind === "line") {
+              ctx.globalAlpha = 0.9;
+              ctx.lineWidth = 2;
+              ctx.moveTo(z.x, z.y);
+              ctx.lineTo(z.x2, z.y2);
+              ctx.stroke();
+            } else {
+              ctx.arc(z.x, z.y, z.r, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.globalAlpha = 0.5;
+              ctx.lineWidth = 1;
+              ctx.stroke();
+            }
+          }
+        ctx.globalAlpha = 1;
+        for (const g of gems.items)
+          if (g.active) {
+            ctx.fillStyle = "#9f8aff";
+            ctx.fillRect(g.x - 3, g.y - 3, 6, 6);
+          }
+        for (const b of loot.items)
+          if (b.active) {
+            ctx.strokeStyle = "#ffcf75";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(b.x - 12, b.y - 12, 24, 24);
+            ctx.fillStyle = "#ffcf75";
+            ctx.fillText("↑", b.x - 4, b.y + 5);
+          }
+        for (const e of enemies.items) {
+          if (!e.active) continue;
+          if (
+            Math.abs(e.x - p.x) > W / 2 + 60 ||
+            Math.abs(e.y - p.y) > H / 2 + 60
+          )
+            continue;
+          const t = TYPES[e.type];
+          ctx.fillStyle = e.slow > 0 ? "#8feaff" : t.color;
+          ctx.strokeStyle = e.elite ? "#ffcf75" : t.color;
+          ctx.lineWidth = e.elite ? 3 : 1;
+          ctx.beginPath();
+          if (e.type === 0 || e.type === 2) {
+            ctx.moveTo(e.x, e.y - e.r);
+            ctx.lineTo(e.x + e.r, e.y);
+            ctx.lineTo(e.x, e.y + e.r);
+            ctx.lineTo(e.x - e.r, e.y);
+            ctx.closePath();
+          } else if (e.type === 1 || e.type === 3)
+            ctx.rect(e.x - e.r, e.y - e.r, e.r * 2, e.r * 2);
+          else ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2);
+          ctx.globalAlpha = 0.22;
+          ctx.fill();
+          ctx.globalAlpha = 1;
+          ctx.stroke();
+          ctx.fillRect(e.x - 3, e.y - 3, 6, 6);
+          if (e.elite) {
+            ctx.fillStyle = "#ffcf75";
+            ctx.fillRect(
+              e.x - e.r,
+              e.y - e.r - 9,
+              (e.r * 2 * e.hp) / e.maxHp,
+              3,
+            );
+          }
+        }
+        for (const b of shots.items)
+          if (b.active) {
+            ctx.fillStyle = b.color;
+            ctx.beginPath();
+            if (b.kind === "beam") ctx.rect(b.x - 2, b.y - 10, 4, 20);
+            else ctx.arc(b.x, b.y, b.r, 0, 6.283);
+            ctx.fill();
+          }
+        for (const o of particles.items)
+          if (o.active) {
+            ctx.globalAlpha = o.life / o.max;
+            ctx.fillStyle = o.color;
+            ctx.fillRect(o.x, o.y, 3, 3);
+          }
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = p.inv > 0 ? "#fff" : "#65ffe0";
+        ctx.fillStyle = "#102f3b";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const a = (i * Math.PI) / 3;
+          const x = p.x + Math.cos(a) * 14,
+            y = p.y + Math.sin(a) * 14;
+          i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#65ffe0";
+        ctx.fillRect(p.x - 4, p.y - 4, 8, 8);
+        ctx.beginPath();
+        ctx.moveTo(p.x + lastX * 22, p.y + lastY * 22);
+        ctx.lineTo(p.x + lastX * 16 - lastY * 4, p.y + lastY * 16 + lastX * 4);
+        ctx.lineTo(p.x + lastX * 16 + lastY * 4, p.y + lastY * 16 - lastX * 4);
+        ctx.fill();
+        ctx.restore();
+      }
+      function tick(ts) {
+        const delta = last ? Math.min(0.05, (ts - last) / 1000) : 1 / 60;
+        last = ts;
+        fps = fps * 0.95 + (1 / Math.max(delta, 0.001)) * 0.05;
+        update(delta);
+        render();
+        hudClock += delta;
+        if (hudClock > 0.15) {
+          updateHud();
+          hudClock = 0;
+        }
+        requestAnimationFrame(tick);
+      }
+      $("panel").addEventListener("click", (e) => {
+        const b = e.target.closest("button");
+        if (!b) return;
+        if (b.dataset.start !== undefined) reset(+b.dataset.start);
+        else if (b.dataset.choice !== undefined) applyChoice(+b.dataset.choice);
+        else if (b.dataset.resume) pause();
+        else if (b.dataset.restart) reset(p ? p.arch : 0);
+        else if (b.dataset.menu) menu();
+        else if (b.dataset.codex) codex();
+        else if (b.dataset.fuse) {
+          const [i, j] = b.dataset.fuse.split(",").map(Number);
+          fuse(i, j);
+          state = "playing";
+          pause();
+          updateHud();
+        } else if (b.dataset.mute) {
+          muted = !muted;
+          if (state === "menu") menu();
+          else {
+            state = "playing";
+            pause();
+          }
+        }
+      });
+      $("pause").addEventListener("click", pause);
+      $("dash").addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        dash();
+      });
+      const joystick = $("joystick");
+      function joy(e) {
+        const r = joystick.getBoundingClientRect();
+        let x = e.clientX - r.left - r.width / 2,
+          y = e.clientY - r.top - r.height / 2,
+          n = Math.hypot(x, y),
+          max = r.width * 0.34;
+        if (n > max) {
+          x = (x / n) * max;
+          y = (y / n) * max;
+        }
+        moveX = x / max;
+        moveY = y / max;
+        $("stick").style.transform = "translate(" + x + "px," + y + "px)";
+      }
+      joystick.addEventListener("pointerdown", (e) => {
+        if (joyId !== null || state !== "playing") return;
+        e.preventDefault();
+        joyId = e.pointerId;
+        joystick.setPointerCapture(joyId);
+        joy(e);
+      });
+      joystick.addEventListener("pointermove", (e) => {
+        if (e.pointerId === joyId) joy(e);
+      });
+      for (const ev of ["pointerup", "pointercancel", "lostpointercapture"])
+        joystick.addEventListener(ev, (e) => {
+          if (e.pointerId === joyId) release();
+        });
+      addEventListener("keydown", (e) => {
+        if (
+          [" ", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(
+            e.key,
+          )
+        )
+          e.preventDefault();
+        if (e.key === "Escape" && !e.repeat) pause();
+        if (e.key === " " && !e.repeat) dash();
+        keys.add(e.key.toLowerCase());
+      });
+      addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
+      addEventListener("blur", () => {
+        release();
+        if (state === "playing") pause();
+      });
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+          release();
+          if (state === "playing") pause();
+        }
+      });
+      // Public diagnostic surface: copies only; no mutation or test cheats exposed.
+      window.__game = Object.freeze({
+        snapshot: () =>
+          JSON.parse(
+            JSON.stringify({
+              state,
+              time,
+              kills,
+              level,
+              xp,
+              need,
+              slots,
+              player: p,
+              inventory: inventory.map((w) => ({ ...w, name: weaponName(w) })),
+              passives,
+              synergies: counts(),
+              enemies: enemies.count(),
+              projectiles: shots.count(),
+              particles: particles.count(),
+              fps,
+              seed: runSeed,
+              stats,
+              content: {
+                weapons: WEAPONS.length,
+                tags: TAGS.length,
+                recipes: RECIPES.length,
+                starters: STARTERS.length,
+              },
+            }),
+          ),
+      });
+      menu();
+      requestAnimationFrame(tick);
+    </script>
+  </body>
+</html>

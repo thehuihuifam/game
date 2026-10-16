@@ -1,0 +1,17 @@
+Environment investigation, 2026-10-16 UTC
+Initial repository: .git + README.md (7 bytes); no game implementation.
+Branch: arena/25e5d249-game, initial HEAD 01451e7f23666fb900a79c9f6e49d1dbee9a27fa.
+python --version: Python 3.11.2
+node --version: v22.22.3
+which google-chrome; which chromium: no installed executable.
+npm install --no-save playwright: success.
+start_process python -m http.server 8765 --bind 0.0.0.0: success, listening 0.0.0.0:8765.
+npx playwright install chromium: failed after retries; ECONNRESET to cdn.playwright.dev (restricted outbound network).
+npm install --no-save playwright @sparticuz/chromium: success (registry.npmjs.org reachable).
+Initial packaged browser launch: failed, libnspr4.so / libnss3.so / libnssutil3.so missing.
+Fix: extract bundled al2023.tar.br into temporary directory; set LD_LIBRARY_PATH (tests/browser.cjs).
+Packaged Chromium launch: success, page title NEON FOUNDRY · 네온 파운드리.
+Korean headless glyphs initially absent. Cached Noto Sans KR via GitHub blob API, FONTCONFIG_PATH=/tmp/fonts.
+No browser CDN, OS package installation, external deployment, or paid service used.
+Resolved test versions: playwright 1.64.1, @sparticuz/chromium 153.0.0 (package-lock.json).
+Final commands: npm test (13 tests + syntax PASS); node tests/recheck.cjs (PASS); node tests/fixture.cjs (PASS); node tests/layout.cjs (PASS); git diff --check (PASS).

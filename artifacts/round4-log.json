@@ -1,0 +1,279 @@
+{
+  "before": {
+    "state": "playing",
+    "time": 0.033400000000000034,
+    "kills": 0,
+    "level": 2,
+    "xp": 0,
+    "need": 12,
+    "slots": 4,
+    "player": {
+      "x": 0,
+      "y": 0,
+      "hp": 100,
+      "maxHp": 100,
+      "arch": 2,
+      "inv": 0,
+      "dash": 0,
+      "dashTime": 0
+    },
+    "inventory": [
+      {
+        "id": 28,
+        "lv": 1,
+        "tier": 0,
+        "cd": 0.06659999999999996,
+        "evolved": false,
+        "name": "회전오브"
+      }
+    ],
+    "passives": {
+      "fuel": 1
+    },
+    "synergies": {
+      "오라": 1,
+      "에너지": 1
+    },
+    "enemies": 1,
+    "projectiles": 0,
+    "particles": 0,
+    "fps": 59.608949752264806,
+    "seed": 1132473611,
+    "stats": {
+      "shots": 0,
+      "damage": 0,
+      "choices": 1,
+      "dashes": 0,
+      "chests": 0,
+      "peakEnemies": 1
+    },
+    "content": {
+      "weapons": 64,
+      "tags": 16,
+      "recipes": 16,
+      "starters": 5
+    }
+  },
+  "during": {
+    "state": "playing",
+    "time": 0.7167000000000003,
+    "kills": 0,
+    "level": 2,
+    "xp": 0,
+    "need": 12,
+    "slots": 4,
+    "player": {
+      "x": 113.35550911942073,
+      "y": -74.49076313561932,
+      "hp": 100,
+      "maxHp": 100,
+      "arch": 2,
+      "inv": 0,
+      "dash": 2.6166000000000014,
+      "dashTime": 0
+    },
+    "inventory": [
+      {
+        "id": 28,
+        "lv": 1,
+        "tier": 0,
+        "cd": 1.1834000000000007,
+        "evolved": false,
+        "name": "회전오브"
+      }
+    ],
+    "passives": {
+      "fuel": 1
+    },
+    "synergies": {
+      "오라": 1,
+      "에너지": 1
+    },
+    "enemies": 1,
+    "projectiles": 2,
+    "particles": 14,
+    "fps": 59.33244537009747,
+    "seed": 1132473611,
+    "stats": {
+      "shots": 2,
+      "damage": 0,
+      "choices": 1,
+      "dashes": 1,
+      "chests": 0,
+      "peakEnemies": 1
+    },
+    "content": {
+      "weapons": 64,
+      "tags": 16,
+      "recipes": 16,
+      "starters": 5
+    }
+  },
+  "release": {
+    "state": "playing",
+    "time": 1.6833,
+    "kills": 0,
+    "level": 2,
+    "xp": 0,
+    "need": 12,
+    "slots": 4,
+    "player": {
+      "x": 113.35550911942073,
+      "y": -74.49076313561932,
+      "hp": 100,
+      "maxHp": 100,
+      "arch": 2,
+      "inv": 0,
+      "dash": 1.6500000000000026,
+      "dashTime": 0
+    },
+    "inventory": [
+      {
+        "id": 28,
+        "lv": 1,
+        "tier": 0,
+        "cd": 0.21680000000000077,
+        "evolved": false,
+        "name": "회전오브"
+      }
+    ],
+    "passives": {
+      "fuel": 1
+    },
+    "synergies": {
+      "오라": 1,
+      "에너지": 1
+    },
+    "enemies": 2,
+    "projectiles": 2,
+    "particles": 0,
+    "fps": 59.97119432216354,
+    "seed": 1132473611,
+    "stats": {
+      "shots": 2,
+      "damage": 0,
+      "choices": 1,
+      "dashes": 1,
+      "chests": 0,
+      "peakEnemies": 2
+    },
+    "content": {
+      "weapons": 64,
+      "tags": 16,
+      "recipes": 16,
+      "starters": 5
+    }
+  },
+  "after": {
+    "state": "playing",
+    "time": 1.9832999999999998,
+    "kills": 0,
+    "level": 2,
+    "xp": 0,
+    "need": 12,
+    "slots": 4,
+    "player": {
+      "x": 113.35550911942073,
+      "y": -74.49076313561932,
+      "hp": 100,
+      "maxHp": 100,
+      "arch": 2,
+      "inv": 0,
+      "dash": 1.3500000000000028,
+      "dashTime": 0
+    },
+    "inventory": [
+      {
+        "id": 28,
+        "lv": 1,
+        "tier": 0,
+        "cd": 1.7333000000000005,
+        "evolved": false,
+        "name": "회전오브"
+      }
+    ],
+    "passives": {
+      "fuel": 1
+    },
+    "synergies": {
+      "오라": 1,
+      "에너지": 1
+    },
+    "enemies": 3,
+    "projectiles": 4,
+    "particles": 0,
+    "fps": 59.98842439724992,
+    "seed": 1132473611,
+    "stats": {
+      "shots": 4,
+      "damage": 0,
+      "choices": 1,
+      "dashes": 1,
+      "chests": 0,
+      "peakEnemies": 3
+    },
+    "content": {
+      "weapons": 64,
+      "tags": 16,
+      "recipes": 16,
+      "starters": 5
+    }
+  },
+  "final": {
+    "state": "playing",
+    "time": 11.699499999999977,
+    "kills": 0,
+    "level": 2,
+    "xp": 0,
+    "need": 12,
+    "slots": 4,
+    "player": {
+      "x": 113.35550911942073,
+      "y": -74.49076313561932,
+      "hp": 50,
+      "maxHp": 100,
+      "arch": 2,
+      "inv": 0.533399999999998,
+      "dash": 0,
+      "dashTime": 0
+    },
+    "inventory": [
+      {
+        "id": 28,
+        "lv": 1,
+        "tier": 0,
+        "cd": 1.0833999999999973,
+        "evolved": false,
+        "name": "회전오브"
+      }
+    ],
+    "passives": {
+      "fuel": 1
+    },
+    "synergies": {
+      "오라": 1,
+      "에너지": 1
+    },
+    "enemies": 15,
+    "projectiles": 2,
+    "particles": 9,
+    "fps": 60.00884561566009,
+    "seed": 1132473611,
+    "stats": {
+      "shots": 14,
+      "damage": 60,
+      "choices": 1,
+      "dashes": 1,
+      "chests": 0,
+      "peakEnemies": 15
+    },
+    "content": {
+      "weapons": 64,
+      "tags": 16,
+      "recipes": 16,
+      "starters": 5
+    }
+  },
+  "errors": [],
+  "touchTargets": []
+}
